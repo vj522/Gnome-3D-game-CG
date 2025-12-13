@@ -1,6 +1,6 @@
 // Main entry point for the game
 import { Renderer } from './Renderer.js';
-import { GLTFLoader } from './GLTFLoader.js';
+import { GLTFLoader } from './engine/loaders/GLTFLoader.js';
 import { Game } from './Game.js';
 
 async function main() {

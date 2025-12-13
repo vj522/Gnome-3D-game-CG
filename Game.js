@@ -1,7 +1,7 @@
 import { mat4, vec3 } from './lib/glm.js';
-import { Camera } from './Camera.js';
-import { FirstPersonController } from './FirstPersonController.js';
-import { Transform } from './Transform.js';
+import { Camera } from './engine/core/Camera.js'
+import { FirstPersonController } from './engine/controllers/FirstPersonController.js';
+import { Transform } from './engine/core/Transform.js';
 
 export class Game {
     constructor(canvas, renderer) {

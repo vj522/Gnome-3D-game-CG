@@ -1,4 +1,4 @@
-import { mat4 } from './lib/glm.js';
+import { mat4 } from '../../lib/glm.js';
 
 //kje je objekt, v katero smer je obrnjen in kako velik je
 export class Transform {

@@ -1,5 +1,5 @@
 
-import { mat4 } from 'glm';
+import { mat4 } from '../../lib/glm.js';
 
 import { Camera } from './Camera.js';
 import { Model } from './Model.js';

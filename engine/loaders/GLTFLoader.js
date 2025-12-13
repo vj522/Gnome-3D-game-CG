@@ -1,4 +1,4 @@
-import { mat4, quat, vec3 } from './lib/glm.js';
+import { mat4, quat, vec3 } from '../../lib/glm.js';
 
 export class GLTFLoader {
     constructor() {

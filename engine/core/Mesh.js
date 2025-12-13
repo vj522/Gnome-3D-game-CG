@@ -1,4 +1,4 @@
-//geometrija objekta, njogove točke
+//geometrija objekta, njegove točke
 
 export class Mesh {
 

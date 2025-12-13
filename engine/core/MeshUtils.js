@@ -1,4 +1,4 @@
-import { quat, vec3, vec4, mat3, mat4 } from 'glm';
+import { quat, vec3, vec4, mat3, mat4 } from '../../lib/glm.js';
 
 
 //ko se objekt premakne ali se zabije v drug objekt(drevo)??
