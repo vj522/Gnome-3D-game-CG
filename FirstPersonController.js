@@ -1,6 +1,6 @@
-import { quat, vec3, mat4 } from 'glm';
+import { quat, vec3, mat4 } from './lib/glm.js';
 
-import { Transform } from '../core/Transform.js';
+import { Transform } from './Transform.js';
 
 export class FirstPersonController {
 
