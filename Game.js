@@ -16,6 +16,8 @@ export class Game {
             near: 0.1,
             far: 1000,
         });
+
+        
         
         // Create a transform component for the player
         this.transform = new Transform({
