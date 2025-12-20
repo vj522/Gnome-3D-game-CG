@@ -14,14 +14,14 @@ export class Game {
             aspect: canvas.width / canvas.height,
             fovy: Math.PI / 3, // 60 degrees
             near: 0.1,
-            far: 1000,
+            far: 5000, // Increased from 1000 to 5000
         });
 
         
         
         // Create a transform component for the player
         this.transform = new Transform({
-            translation: [0, 26.0, 0], // Player starting height
+            translation: [0, 30.0, 0], // Player starting height
             rotation: [0, 0, 0, 1],
             scale: [1, 1, 1],
         });

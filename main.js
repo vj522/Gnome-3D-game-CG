@@ -1,5 +1,5 @@
 // Main entry point for the game
-import { Renderer } from './Renderer.js';
+import { WebGPURenderer } from './WebGPURenderer.js';
 import { GLTFLoader } from './engine/loaders/GLTFLoader.js';
 import { Game } from './Game.js';
 
@@ -7,14 +7,22 @@ async function main() {
     const canvas = document.getElementById('glCanvas');
     const loadingDiv = document.getElementById('loading');
     
-    // Initialize WebGL2
-    const gl = canvas.getContext('webgl2');
-    if (!gl) {
-        alert('WebGL2 is not supported in your browser!');
+    // Initialize WebGPU
+    if (!navigator.gpu) {
+        alert('WebGPU is not supported in your browser! Please use Chrome 113+ or Edge 113+');
         return;
     }
     
-    console.log('WebGL2 initialized successfully');
+    const adapter = await navigator.gpu.requestAdapter();
+    if (!adapter) {
+        alert('Failed to get WebGPU adapter!');
+        return;
+    }
+    
+    const device = await adapter.requestDevice();
+    const context = canvas.getContext('webgpu');
+    
+    console.log('WebGPU initialized successfully');
     
     let game = null;
     
@@ -22,18 +30,13 @@ async function main() {
     function resizeCanvas() {
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
-        gl.viewport(0, 0, canvas.width, canvas.height);
-        if (game) {
+        if (game && game.renderer) {
+            game.renderer.resizePostProcessing(canvas.width, canvas.height);
             game.handleResize();
         }
     }
     resizeCanvas();
     window.addEventListener('resize', resizeCanvas);
-    
-    // Enable depth testing and backface culling
-    gl.enable(gl.DEPTH_TEST);
-    gl.enable(gl.CULL_FACE);
-    gl.cullFace(gl.BACK);
     
     // Load shader source files
     async function loadShaderSource(url) {
@@ -44,62 +47,24 @@ async function main() {
         return await response.text();
     }
     
-    // Compile shader
-    function compileShader(gl, source, type) {
-        const shader = gl.createShader(type);
-        gl.shaderSource(shader, source);
-        gl.compileShader(shader);
-        
-        if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-            const info = gl.getShaderInfoLog(shader);
-            gl.deleteShader(shader);
-            throw new Error(`Shader compilation error: ${info}`);
-        }
-        
-        return shader;
-    }
-    
-    // Create shader program
-    function createProgram(gl, vertexShader, fragmentShader) {
-        const program = gl.createProgram();
-        gl.attachShader(program, vertexShader);
-        gl.attachShader(program, fragmentShader);
-        gl.linkProgram(program);
-        
-        if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-            const info = gl.getProgramInfoLog(program);
-            gl.deleteProgram(program);
-            throw new Error(`Program linking error: ${info}`);
-        }
-        
-        return program;
-    }
-    
     try {
-        // Load and compile shaders
+        // Load and create shader modules
         console.log('Loading shaders...');
-        const vertexSource = await loadShaderSource('shaders/vertex.glsl');
-        const fragmentSource = await loadShaderSource('shaders/fragment.glsl');
+        const mainShaderSource = await loadShaderSource('shaders/main.wgsl');
+        const postProcessShaderSource = await loadShaderSource('shaders/postprocess.wgsl');
         
-        const vertexShader = compileShader(gl, vertexSource, gl.VERTEX_SHADER);
-        const fragmentShader = compileShader(gl, fragmentSource, gl.FRAGMENT_SHADER);
+        const mainShaderModule = device.createShaderModule({
+            code: mainShaderSource
+        });
         
-        const shaderProgram = createProgram(gl, vertexShader, fragmentShader);
-        console.log('Shaders compiled successfully');
+        const postProcessShaderModule = device.createShaderModule({
+            code: postProcessShaderSource
+        });
         
-        // Load and compile post-processing shaders
-        console.log('Loading post-processing shaders...');
-        const postVertexSource = await loadShaderSource('shaders/postprocess_vertex.glsl');
-        const postFragmentSource = await loadShaderSource('shaders/postprocess.glsl');
-        
-        const postVertexShader = compileShader(gl, postVertexSource, gl.VERTEX_SHADER);
-        const postFragmentShader = compileShader(gl, postFragmentSource, gl.FRAGMENT_SHADER);
-        
-        const postProcessProgram = createProgram(gl, postVertexShader, postFragmentShader);
-        console.log('Post-processing shaders compiled successfully');
+        console.log('Shaders loaded successfully');
         
         // Create renderer
-        const renderer = new Renderer(gl, shaderProgram, postProcessProgram);
+        const renderer = new WebGPURenderer(device, context, canvas, mainShaderModule, postProcessShaderModule);
         console.log('Renderer created');
         
         // Create game
@@ -116,6 +81,11 @@ async function main() {
         game.addEntities(gltfData.entities);
         console.log(`Added ${gltfData.entities.length} entities to scene`);
         
+        // Preload textures
+        loadingDiv.textContent = 'Loading textures...';
+        await renderer.preloadTextures(game.scene);
+        console.log('Textures preloaded');
+        
         // Hide loading screen
         loadingDiv.style.display = 'none';
         
@@ -125,10 +95,6 @@ async function main() {
             currentTime *= 0.001; // Convert to seconds
             const deltaTime = currentTime - lastTime;
             lastTime = currentTime;
-            
-            // Clear the canvas
-            gl.clearColor(0.5, 0.6, 0.7, 1.0); // Sky blue color
-            gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
             
             // Update game state
             if (deltaTime > 0 && deltaTime < 0.1) { // Cap delta time to avoid huge jumps
