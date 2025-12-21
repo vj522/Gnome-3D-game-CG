@@ -2,6 +2,10 @@
 import { WebGPURenderer } from './WebGPURenderer.js';
 import { GLTFLoader } from './engine/loaders/GLTFLoader.js';
 import { Game } from './Game.js';
+import {
+    calculateAxisAlignedBoundingBox,
+    mergeAxisAlignedBoundingBoxes,
+} from './engine/core/MeshUtils.js';
 
 async function main() {
     const canvas = document.getElementById('glCanvas');
@@ -78,8 +82,19 @@ async function main() {
         console.log('GLTF model loaded');
         
         // Add all entities from GLTF to the scene
+        
+        game.changeToVec(gltfData.entities);
         game.addEntities(gltfData.entities);
+        
         console.log(`Added ${gltfData.entities.length} entities to scene`);
+
+        
+        for (const entity of game.scene.entities) {
+            // console.log(entity)
+
+            const boxes = entity.primitives.map(primitive => calculateAxisAlignedBoundingBox(primitive.mesh));
+            entity.aabb = mergeAxisAlignedBoundingBoxes(boxes);
+        }
         
         // Preload textures
         loadingDiv.textContent = 'Loading textures...';
@@ -91,6 +106,8 @@ async function main() {
         
         // Render loop
         let lastTime = 0;
+
+
         function render(currentTime) {
             currentTime *= 0.001; // Convert to seconds
             const deltaTime = currentTime - lastTime;
