@@ -78,13 +78,18 @@ async function main() {
         // Load GLTF model
         loadingDiv.textContent = 'Loading forest model...';
         const loader = new GLTFLoader();
-        const gltfData = await loader.load('objekti/hand_painted_forest/hand_painted_forest.gltf');
+        // const gltfData = await loader.load('objekti/hand_painted_forest/hand_painted_forest.gltf');
+        const gltfData = await loader.load('objekti/collisions_test/forest_test4.gltf');
         console.log('GLTF model loaded');
         
         // Add all entities from GLTF to the scene
         
         game.changeToVec(gltfData.entities);
+        
+        game.addTransform(gltfData.entities);
         game.addEntities(gltfData.entities);
+
+        console.log(gltfData.entities);
         
         console.log(`Added ${gltfData.entities.length} entities to scene`);
 

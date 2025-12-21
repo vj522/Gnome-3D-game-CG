@@ -22,7 +22,7 @@ export class Game {
         
         // Create a transform component for the player
         this.transform = new Transform({
-            translation: [0, 15.0, 0], // Player starting height
+            translation: [0, 30.0, 0], // Player starting height
             rotation: [0, 0, 0, 1],
             scale: [1, 1, 1],
         });
@@ -92,6 +92,14 @@ export class Game {
                     primitive.mesh.vertices.push(v);
                 }
             }
+        }
+    }
+
+    addTransform(entities){
+        for (const entity of entities){
+            entity.transform = new Transform({
+                matrix: mat4.clone(entity.modelMatrix)
+            });
         }
     }
     

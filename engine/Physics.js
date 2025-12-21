@@ -11,7 +11,8 @@ export class Physics {
 
     update(t, dt) {
         for (const entity of this.scene.entities) {
-            this.resolveCollision(this.player, entity)
+            if (entity.extras)
+                this.resolveCollision(this.player, entity)
         }
     }
 
@@ -28,6 +29,7 @@ export class Physics {
     getTransformedAABB(entity) {
         // Transform all vertices of the AABB from local to global space.
         // const matrix = getGlobalModelMatrix(entity);
+        console.log(entity)
         const matrix = entity.transform.matrix;
         const { min, max } = entity.aabb;
         const vertices = [
@@ -53,9 +55,10 @@ export class Physics {
     resolveCollision(a, b) {
         // Get global space AABBs.
         const aBox = this.getTransformedAABB(a);
+        const bBox = this.getTransformedAABB(b);
         // const bBox = this.getTransformedAABB(b);
         // const aBox = a.aabb;
-        const bBox = b.aabb;
+        // const bBox = b.aabb;
 
         // Check if there is collision.
         const isColliding = this.aabbIntersection(aBox, bBox);
