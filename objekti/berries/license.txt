@@ -1,0 +1,11 @@
+Model Information:
+* title:	Berries
+* source:	https://sketchfab.com/3d-models/berries-36b61b53906e4274ac1826d1d6de5c5a
+* author:	Persio Augusto Torno Suguinoshita (https://sketchfab.com/persio1998)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Berries" (https://sketchfab.com/3d-models/berries-36b61b53906e4274ac1826d1d6de5c5a) by Persio Augusto Torno Suguinoshita (https://sketchfab.com/persio1998) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
