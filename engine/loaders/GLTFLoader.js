@@ -108,6 +108,7 @@ export class GLTFLoader {
                 images, 
                 worldMatrix
             );
+            entity.extras = node.extras
             if (entity) {
                 entities.push(entity);
             }

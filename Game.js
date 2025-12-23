@@ -2,6 +2,7 @@ import { mat4, vec3 } from './lib/glm.js';
 import { Camera } from './engine/core/Camera.js'
 import { FirstPersonController } from './engine/controllers/FirstPersonController.js';
 import { Transform } from './engine/core/Transform.js';
+import { Physics } from './engine/Physics.js';
 
 export class Game {
     constructor(canvas, renderer) {
@@ -14,14 +15,14 @@ export class Game {
             aspect: canvas.width / canvas.height,
             fovy: Math.PI / 3, // 60 degrees
             near: 0.1,
-            far: 1000,
+            far: 5000, // Increased from 1000 to 5000
         });
 
         
         
         // Create a transform component for the player
         this.transform = new Transform({
-            translation: [0, 26.0, 0], // Player starting height
+            translation: [0, 30.0, 0], // Player starting height
             rotation: [0, 0, 0, 1],
             scale: [1, 1, 1],
         });
@@ -47,6 +48,14 @@ export class Game {
         
         // Visual effects
         this.blurEnabled = false;
+
+        this.aabb = {
+            min: [-0.2, -0.2, -0.2],
+            max: [0.2, 0.2, 0.2],
+        };
+
+        // Initiate physics
+        this.physics = new Physics(this, this.scene);
         
         // Add key handler for blur toggle
         document.addEventListener('keydown', (e) => {
@@ -65,7 +74,33 @@ export class Game {
     }
     
     addEntities(entities) {
+        console.log(entities)
         this.scene.entities.push(...entities);
+    }
+
+    changeToVec(entities) {
+        for (const entity of entities){
+            for (const primitive of entity.primitives){
+                const positions = primitive.mesh.positions;
+                primitive.mesh.vertices = []
+                for (let i = 0; i < positions.length; i += 3) {
+                    const v = vec3.fromValues(
+                        positions[i],
+                        positions[i + 1],
+                        positions[i + 2]
+                    );
+                    primitive.mesh.vertices.push(v);
+                }
+            }
+        }
+    }
+
+    addTransform(entities){
+        for (const entity of entities){
+            entity.transform = new Transform({
+                matrix: mat4.clone(entity.modelMatrix)
+            });
+        }
     }
     
     update(deltaTime) {
@@ -93,6 +128,10 @@ export class Game {
             this.controller.velocity[1] = this.jumpVelocity;
             this.isOnGround = false;
         }
+
+        // console.log(this.transform.translation);
+
+        this.physics.update(0, deltaTime);
         
         // Update camera matrices
         this.updateCameraMatrices();

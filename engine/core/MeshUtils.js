@@ -21,14 +21,15 @@ export function transformMesh(mesh, matrix,
 }
 
 export function calculateAxisAlignedBoundingBox(mesh) {
+    console.log(mesh)
     const initial = {
-        min: vec3.clone(mesh.vertices[0].position),
-        max: vec3.clone(mesh.vertices[0].position),
+        min: vec3.clone(mesh.vertices[0]),
+        max: vec3.clone(mesh.vertices[0]),
     };
 
     return {
-        min: mesh.vertices.reduce((a, b) => vec3.min(a, a, b.position), initial.min),
-        max: mesh.vertices.reduce((a, b) => vec3.max(a, a, b.position), initial.max),
+        min: mesh.vertices.reduce((a, b) => vec3.min(a, a, b), initial.min),
+        max: mesh.vertices.reduce((a, b) => vec3.max(a, a, b), initial.max),
     };
 }
 

@@ -27,6 +27,8 @@ export class FirstPersonController {
         this.decay = decay;
         this.pointerSensitivity = pointerSensitivity;
 
+        
+
         this.initHandlers();
     }
 
