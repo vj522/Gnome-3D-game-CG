@@ -9,6 +9,7 @@ export class Game {
         this.canvas = canvas;
         this.renderer = renderer;
         this.scene = { entities: [] };
+        this.collisions = { entities: [] };
         
         // Create player camera
         this.camera = new Camera({
@@ -55,7 +56,7 @@ export class Game {
         };
 
         // Initiate physics
-        this.physics = new Physics(this, this.scene);
+        this.physics = new Physics(this, this.collisions);
         
         // Add key handler for blur toggle
         document.addEventListener('keydown', (e) => {
@@ -76,6 +77,15 @@ export class Game {
     addEntities(entities) {
         console.log(entities)
         this.scene.entities.push(...entities);
+    }
+
+    addEntityBox(entity) {
+        this.collisions.entities.push(entity);
+    }
+    
+    addEntitiesBox(entities) {
+        console.log(entities)
+        this.collisions.entities.push(...entities);
     }
 
     changeToVec(entities) {
