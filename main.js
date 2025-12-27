@@ -86,6 +86,12 @@ async function main() {
         const loaderBox = new GLTFLoader();
         const gltfDataBox = await loaderBox.load('objekti/collision_boxes2/map_with_boxes.gltf');
         console.log('GLTF model loaded');
+
+        // Load floor collision GLTF (single object with exact collision)
+        loadingDiv.textContent = 'Loading floor collision...';
+        const floorLoader = new GLTFLoader();
+        const floorData = await floorLoader.load('objekti/floor2/floor.gltf');
+        console.log('Floor GLTF loaded');
         
         // Add all entities from GLTF to the scene
         
@@ -98,12 +104,19 @@ async function main() {
         game.addTransform(gltfDataBox.entities);
         game.addEntitiesBox(gltfDataBox.entities);
 
+        
+
         //di vifim kako se narišejo boxi, potem to ven!!
-        game.addEntities(gltfDataBox.entities);
+        // game.addEntities(gltfDataBox.entities);
 
         // console.log(gltfData.entities);
         
         console.log(`Added ${gltfData.entities.length} entities to scene`);
+
+        // Register floor collision mesh for exact collisions
+        if (floorData && floorData.entities && floorData.entities.length > 0) {
+            game.setFloorCollision(floorData.entities);
+        }
 
         
         for (const entity of game.collisions.entities) {
