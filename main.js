@@ -79,7 +79,10 @@ async function main() {
         loadingDiv.textContent = 'Loading forest model...';
         const loader = new GLTFLoader();
         // const gltfData = await loader.load('objekti/hand_painted_forest/hand_painted_forest.gltf');
-        const gltfData = await loader.load('objekti/collisions_test/forest_test4.gltf');
+        const gltfData = await loader.load('objekti/collisions_test/forest_final.gltf');
+        console.log('GLTF model loaded');
+
+        const gltfDataBox = await loader.load('objekti/boxes/collision_boxes.gltf');
         console.log('GLTF model loaded');
         
         // Add all entities from GLTF to the scene
@@ -89,12 +92,16 @@ async function main() {
         game.addTransform(gltfData.entities);
         game.addEntities(gltfData.entities);
 
+        game.changeToVec(gltfDataBox.entities);
+        game.addTransform(gltfDataBox.entities);
+        game.addEntitiesBox(gltfDataBox.entities);
+
         console.log(gltfData.entities);
         
         console.log(`Added ${gltfData.entities.length} entities to scene`);
 
         
-        for (const entity of game.scene.entities) {
+        for (const entity of game.collisions.entities) {
             // console.log(entity)
 
             const boxes = entity.primitives.map(primitive => calculateAxisAlignedBoundingBox(primitive.mesh));
