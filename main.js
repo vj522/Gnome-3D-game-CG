@@ -7,6 +7,7 @@ import {
     mergeAxisAlignedBoundingBoxes,
 } from './engine/core/MeshUtils.js';
 
+
 async function main() {
     const canvas = document.getElementById('glCanvas');
     const loadingDiv = document.getElementById('loading');
@@ -82,21 +83,25 @@ async function main() {
         const gltfData = await loader.load('objekti/collisions_test/forest_final.gltf');
         console.log('GLTF model loaded');
 
-        const gltfDataBox = await loader.load('objekti/boxes/collision_boxes.gltf');
+        const loaderBox = new GLTFLoader();
+        const gltfDataBox = await loaderBox.load('objekti/collision_boxes2/map_with_boxes.gltf');
         console.log('GLTF model loaded');
         
         // Add all entities from GLTF to the scene
         
         game.changeToVec(gltfData.entities);
-        
         game.addTransform(gltfData.entities);
         game.addEntities(gltfData.entities);
 
+        
         game.changeToVec(gltfDataBox.entities);
         game.addTransform(gltfDataBox.entities);
         game.addEntitiesBox(gltfDataBox.entities);
 
-        console.log(gltfData.entities);
+        //di vifim kako se narišejo boxi, potem to ven!!
+        game.addEntities(gltfDataBox.entities);
+
+        // console.log(gltfData.entities);
         
         console.log(`Added ${gltfData.entities.length} entities to scene`);
 

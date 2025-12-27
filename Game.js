@@ -34,7 +34,7 @@ export class Game {
             yaw: 0,
             velocity: [0, 0, 0],
             acceleration: 20,
-            maxSpeed: 5,
+            maxSpeed: 8,
             decay: 0.99999,
             pointerSensitivity: 0.002,
         });
@@ -50,10 +50,11 @@ export class Game {
         // Visual effects
         this.blurEnabled = false;
 
+        //bounding box za playerja
         this.aabb = {
-            min: [-0.2, -0.2, -0.2],
-            max: [0.2, 0.2, 0.2],
-        };
+            min: [0,0,0],
+            max: [0,0,0],
+        }; 
 
         // Initiate physics
         this.physics = new Physics(this, this.collisions);
@@ -75,7 +76,7 @@ export class Game {
     }
     
     addEntities(entities) {
-        console.log(entities)
+        // console.log(entities)
         this.scene.entities.push(...entities);
     }
 
@@ -84,7 +85,7 @@ export class Game {
     }
     
     addEntitiesBox(entities) {
-        console.log(entities)
+        // console.log(entities)
         this.collisions.entities.push(...entities);
     }
 
@@ -114,6 +115,8 @@ export class Game {
     }
     
     update(deltaTime) {
+        console.log(this.isOnGround)
+        console.log(this.transform.translation[1])
         // Update controller (handles movement)
         this.controller.update(0, deltaTime);
         

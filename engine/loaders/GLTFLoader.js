@@ -14,7 +14,7 @@ export class GLTFLoader {
         }
         
         const gltf = await response.json();
-        console.log('GLTF loaded:', gltf);
+        // console.log('GLTF loaded:', gltf);
         
         // Load all buffers
         const buffers = await this.loadBuffers(gltf);
