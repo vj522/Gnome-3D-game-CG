@@ -1,15 +1,17 @@
+import { vec3 } from "../../lib/glm.js";
+
 
 export class FloorPhysics {
+    
 
-    constructor(entities) {
-        this.entities = entities;
+    constructor() {
         this.floorMesh = null;
         this.floorHeight = 24;
     }
 
     // Build floor collision mesh from a GLTF entity (or array of entities)
-    setFloorCollision() {
-        const ents = Array.isArray(this.entities) ? this.entities : [this.entities];
+    setFloorCollision(entities) {
+        const ents = Array.isArray(entities) ? entities : [entities];
         const triangles = [];
 
         for (const entity of ents) {

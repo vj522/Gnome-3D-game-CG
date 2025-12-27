@@ -104,6 +104,8 @@ async function main() {
         game.addTransform(gltfDataBox.entities);
         game.addEntitiesBox(gltfDataBox.entities);
 
+        game.addEntitiesFloor(floorData.entities);
+
         
 
         //di vifim kako se narišejo boxi, potem to ven!!
@@ -113,10 +115,6 @@ async function main() {
         
         console.log(`Added ${gltfData.entities.length} entities to scene`);
 
-        // Register floor collision mesh for exact collisions
-        if (floorData && floorData.entities && floorData.entities.length > 0) {
-            game.setFloorCollision(floorData.entities);
-        }
 
         
         for (const entity of game.collisions.entities) {
