@@ -40,7 +40,7 @@ export class Game {
         });
         
         // Floor height (for collision)
-        this.floorHeight = 24.0; // Forest floor is at this height
+        this.floorHeight = 26.0; // Forest floor is at this height
         
         // Jump mechanics
         this.gravity = -20.0; // Gravity acceleration
@@ -115,8 +115,8 @@ export class Game {
     }
     
     update(deltaTime) {
-        console.log(this.isOnGround)
-        console.log(this.transform.translation[1])
+        // console.log(this.isOnGround)
+        // console.log(this.transform.translation[1])
         // Update controller (handles movement)
         this.controller.update(0, deltaTime);
         
