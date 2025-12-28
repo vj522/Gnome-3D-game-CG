@@ -3,7 +3,6 @@ import { vec3 } from "../../lib/glm.js";
 
 export class FloorPhysics {
     
-
     constructor() {
         this.floorMesh = null;
         this.floorHeight = 24;

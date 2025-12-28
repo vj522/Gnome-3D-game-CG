@@ -2,17 +2,18 @@ import { mat4, vec3 } from './lib/glm.js';
 import { Camera } from './engine/core/Camera.js'
 import { FirstPersonController } from './engine/controllers/FirstPersonController.js';
 import { Transform } from './engine/core/Transform.js';
-import { Physics } from './engine/physics/Physics.js';
-import { FloorPhysics } from './engine/physics/FloorPhysics.js';
+
+import { Scene } from './engine/scene/Scene.js';
+import { ForestScene } from './engine/scene/ForestScene.js';
+import { CaveScene } from './engine/scene/CaveScene.js';
+
 
 export class Game {
+
     constructor(canvas, renderer) {
         this.canvas = canvas;
         this.renderer = renderer;
-        this.scene = { entities: [] };
-        this.collisions = { entities: [] };
-        this.floor = { entities: [] };
-        
+
         // Create player camera
         this.camera = new Camera({
             aspect: canvas.width / canvas.height,
@@ -21,7 +22,6 @@ export class Game {
             far: 5000, // Increased from 1000 to 5000
         });
 
-        
         
         // Create a transform component for the player
         this.transform = new Transform({
@@ -41,10 +41,7 @@ export class Game {
             pointerSensitivity: 0.002,
         });
         
-        // Floor height (for collision)
-        this.floorHeight = 26.0; // Fallback forest floor height
-        this.floorMesh = null; // will hold triangle list for exact collisions
-        
+
         // Jump mechanics
         this.gravity = -20.0; // Gravity acceleration
         this.jumpVelocity = 15.0; // Initial jump velocity (increased for higher jumps)
@@ -59,10 +56,7 @@ export class Game {
             max: [0,0,0],
         }; 
 
-        // Initiate physics
-        this.physics = new Physics(this, this.collisions);
-        this.floorPhysics = new FloorPhysics();
-        
+                
         // Add key handler for blur toggle
         document.addEventListener('keydown', (e) => {
             if (e.code === 'Digit8') {
@@ -70,63 +64,27 @@ export class Game {
                 console.log('Blur effect:', this.blurEnabled ? 'ON' : 'OFF');
             }
         });
+
+
+        // // Floor height (for collision)
+        // this.floorHeight = 26.0; // Fallback forest floor height
+        // this.floorMesh = null; // will hold triangle list for exact collisions
         
+    }
+
+    async init_scene(){
+        //load scene (forest), later switch to cave
+        this.scene = new ForestScene(this);
+        await this.scene.load();
+
         // Prepare camera object for renderer
         this.updateCameraMatrices();
     }
 
 
-   
-    
-    addEntity(entity) {
-        this.scene.entities.push(entity);
-    }
-    
-    addEntities(entities) {
-        // console.log(entities)
-        this.scene.entities.push(...entities);
-    }
-
-    
-    addEntitiesBox(entities) {
-        this.collisions.entities.push(...entities);
-    }
-
-    addEntitiesFloor(entities) {
-        this.floor.entities.push(...entities);
-        // Register floor collision mesh for exact collisions
-        this.floorPhysics.setFloorCollision(this.floor.entities);
-    }
-       
-    
-
-
-    changeToVec(entities) {
-        for (const entity of entities){
-            for (const primitive of entity.primitives){
-                const positions = primitive.mesh.positions;
-                primitive.mesh.vertices = []
-                for (let i = 0; i < positions.length; i += 3) {
-                    const v = vec3.fromValues(
-                        positions[i],
-                        positions[i + 1],
-                        positions[i + 2]
-                    );
-                    primitive.mesh.vertices.push(v);
-                }
-            }
-        }
-    }
-
-    addTransform(entities){
-        for (const entity of entities){
-            entity.transform = new Transform({
-                matrix: mat4.clone(entity.modelMatrix)
-            });
-        }
-    }
     
     update(deltaTime) {
+        
         // console.log(this.isOnGround)
         // console.log(this.transform.translation[1])
         // Update controller (handles movement)
@@ -135,8 +93,11 @@ export class Game {
         // Apply gravity
         this.controller.velocity[1] += this.gravity * deltaTime;
         
+        const scene = this.scene; //active scene
+
         // Apply floor collision (keep camera at eye level above floor)
-        const floorY = this.floorPhysics.getFloorHeightAt(this.transform.translation[0], this.transform.translation[2]);
+        const floorY = this.scene.floorPhysics.getFloorHeightAt(this.transform.translation[0], this.transform.translation[2]);
+
         const eyeLevel = floorY + 1.8;
         if (this.transform.translation[1] <= eyeLevel) {
             this.transform.translation[1] = eyeLevel;
@@ -155,13 +116,49 @@ export class Game {
             this.isOnGround = false;
         }
 
+        //logging coordinates when moved
+        const speed = Math.hypot(this.controller.velocity[0], this.controller.velocity[2]);
+        if (speed > 0.01) { // small threshold to avoid logging tiny movements
+            console.log("Player coordinates:", this.transform.translation);
+        }
+        
         // console.log(this.transform.translation);
-
-        this.physics.update(0, deltaTime);
+        //scene specific physics, resolve collisions with objects
+        scene.physics.update(0, deltaTime);
         
         // Update camera matrices
         this.updateCameraMatrices();
+
+
+        //SCENE TRIGGER
+        const PlayerPosition = this.transform.translation;
+        const newScene = this.scene.checkTriggers(PlayerPosition); //vrne null ani novo sceno
+
+        if (newScene){
+            this.changeScene(newScene);
+        }
+
+
     }
+
+    async changeScene(newScene) {
+        console.log("Switching scenes...");
+
+        this.scene = new newScene(this);
+        await this.scene.load();
+
+        // Reset player position if needed
+        if (newScene==ForestScene)
+            this.transform.translation = [3.021825211729329, 27.88363407877016, -18.413587828218382];
+        else
+            this.transform.translation = [0, 10, 0];  //??? kam pademo v startu ko preidemo
+
+        // Update camera matrices for renderer
+        this.updateCameraMatrices();
+    }
+
+    
+
     
     updateCameraMatrices() {
         // Update camera aspect ratio if window resized

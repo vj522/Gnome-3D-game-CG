@@ -2,10 +2,7 @@
 import { WebGPURenderer } from './WebGPURenderer.js';
 import { GLTFLoader } from './engine/loaders/GLTFLoader.js';
 import { Game } from './Game.js';
-import {
-    calculateAxisAlignedBoundingBox,
-    mergeAxisAlignedBoundingBoxes,
-} from './engine/core/MeshUtils.js';
+
 
 
 async function main() {
@@ -77,59 +74,18 @@ async function main() {
         
         // Create game
         game = new Game(canvas, renderer);
+        await game.init_scene();
         console.log('Game created');
         
-        // Load GLTF model
-        //loadingDiv.textContent = 'Loading forest model...';
-        const loader = new GLTFLoader();
-        const gltfData = await loader.load('objekti/forest/forest.gltf');
-        // const gltfData = await loader.load('objekti/collisions_test/forest_final.gltf');
-        console.log('GLTF model loaded (forest)');
-
-        const loaderBox = new GLTFLoader();
-        //boxes za drevesa, stene, meje površine
-        const gltfDataBox = await loaderBox.load('objekti/wall/forest_all_boxes.gltf');
-        console.log('GLTF model loaded (forest collisions)');
-
-
-        // Load floor collision GLTF (single object with exact collision)
-        // loadingDiv.textContent = 'Loading floor collision...';
-        const floorLoader = new GLTFLoader();
-        const floorData = await floorLoader.load('objekti/floor/floor.gltf');
-        console.log('Floor GLTF loaded (floor)');
-
-        
-        // Add all entities from GLTF to the scene
-        
-        game.changeToVec(gltfData.entities);
-        game.addTransform(gltfData.entities);
-        game.addEntities(gltfData.entities);
-
-        
-        game.changeToVec(gltfDataBox.entities);
-        game.addTransform(gltfDataBox.entities);
-        game.addEntitiesBox(gltfDataBox.entities);
-
-
-        game.addEntitiesFloor(floorData.entities);
 
         
         //di vidim kako se narišejo boxi, potem to ven!!
-        // game.addEntities(gltfDataBox.entities);
+        // game.scene.addEntities(gltfDataBox.entities);
 
         // console.log(gltfData.entities);
         
 
-        console.log(`Added ${gltfData.entities.length} entities (forest) to scene`);
 
-
-        
-        for (const entity of game.collisions.entities) {
-            // console.log(entity)
-
-            const boxes = entity.primitives.map(primitive => calculateAxisAlignedBoundingBox(primitive.mesh));
-            entity.aabb = mergeAxisAlignedBoundingBoxes(boxes);
-        }
         
         // Preload textures
         loadingDiv.textContent = 'Loading textures...';
