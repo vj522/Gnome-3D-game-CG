@@ -21,7 +21,7 @@ export function transformMesh(mesh, matrix,
 }
 
 export function calculateAxisAlignedBoundingBox(mesh) {
-    console.log(mesh)
+    // console.log(mesh)
     const initial = {
         min: vec3.clone(mesh.vertices[0]),
         max: vec3.clone(mesh.vertices[0]),

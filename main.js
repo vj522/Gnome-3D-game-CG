@@ -7,6 +7,7 @@ import {
     mergeAxisAlignedBoundingBoxes,
 } from './engine/core/MeshUtils.js';
 
+
 async function main() {
     const canvas = document.getElementById('glCanvas');
     const loadingDiv = document.getElementById('loading');
@@ -67,6 +68,9 @@ async function main() {
         
         console.log('Shaders loaded successfully');
         
+        // loadingDiv.textContent = 'Loading game';
+
+
         // Create renderer
         const renderer = new WebGPURenderer(device, context, canvas, mainShaderModule, postProcessShaderModule);
         console.log('Renderer created');
@@ -76,29 +80,48 @@ async function main() {
         console.log('Game created');
         
         // Load GLTF model
-        loadingDiv.textContent = 'Loading forest model...';
+        //loadingDiv.textContent = 'Loading forest model...';
         const loader = new GLTFLoader();
-        // const gltfData = await loader.load('objekti/hand_painted_forest/hand_painted_forest.gltf');
-        const gltfData = await loader.load('objekti/collisions_test/forest_final.gltf');
-        console.log('GLTF model loaded');
+        const gltfData = await loader.load('objekti/forest/forest.gltf');
+        // const gltfData = await loader.load('objekti/collisions_test/forest_final.gltf');
+        console.log('GLTF model loaded (forest)');
 
-        const gltfDataBox = await loader.load('objekti/boxes/collision_boxes.gltf');
-        console.log('GLTF model loaded');
+        const loaderBox = new GLTFLoader();
+        //boxes za drevesa, stene, meje površine
+        const gltfDataBox = await loaderBox.load('objekti/wall/forest_all_boxes.gltf');
+        console.log('GLTF model loaded (forest collisions)');
+
+
+        // Load floor collision GLTF (single object with exact collision)
+        // loadingDiv.textContent = 'Loading floor collision...';
+        const floorLoader = new GLTFLoader();
+        const floorData = await floorLoader.load('objekti/floor/floor.gltf');
+        console.log('Floor GLTF loaded (floor)');
+
         
         // Add all entities from GLTF to the scene
         
         game.changeToVec(gltfData.entities);
-        
         game.addTransform(gltfData.entities);
         game.addEntities(gltfData.entities);
 
+        
         game.changeToVec(gltfDataBox.entities);
         game.addTransform(gltfDataBox.entities);
         game.addEntitiesBox(gltfDataBox.entities);
 
-        console.log(gltfData.entities);
+
+        game.addEntitiesFloor(floorData.entities);
+
         
-        console.log(`Added ${gltfData.entities.length} entities to scene`);
+        //di vidim kako se narišejo boxi, potem to ven!!
+        // game.addEntities(gltfDataBox.entities);
+
+        // console.log(gltfData.entities);
+        
+
+        console.log(`Added ${gltfData.entities.length} entities (forest) to scene`);
+
 
         
         for (const entity of game.collisions.entities) {

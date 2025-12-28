@@ -2,7 +2,8 @@ import { mat4, vec3 } from './lib/glm.js';
 import { Camera } from './engine/core/Camera.js'
 import { FirstPersonController } from './engine/controllers/FirstPersonController.js';
 import { Transform } from './engine/core/Transform.js';
-import { Physics } from './engine/Physics.js';
+import { Physics } from './engine/physics/Physics.js';
+import { FloorPhysics } from './engine/physics/FloorPhysics.js';
 
 export class Game {
     constructor(canvas, renderer) {
@@ -10,6 +11,7 @@ export class Game {
         this.renderer = renderer;
         this.scene = { entities: [] };
         this.collisions = { entities: [] };
+        this.floor = { entities: [] };
         
         // Create player camera
         this.camera = new Camera({
@@ -34,13 +36,14 @@ export class Game {
             yaw: 0,
             velocity: [0, 0, 0],
             acceleration: 20,
-            maxSpeed: 5,
+            maxSpeed: 8,
             decay: 0.99999,
             pointerSensitivity: 0.002,
         });
         
         // Floor height (for collision)
-        this.floorHeight = 24.0; // Forest floor is at this height
+        this.floorHeight = 26.0; // Fallback forest floor height
+        this.floorMesh = null; // will hold triangle list for exact collisions
         
         // Jump mechanics
         this.gravity = -20.0; // Gravity acceleration
@@ -50,13 +53,15 @@ export class Game {
         // Visual effects
         this.blurEnabled = false;
 
+        //bounding box za playerja
         this.aabb = {
-            min: [-0.2, -0.2, -0.2],
-            max: [0.2, 0.2, 0.2],
-        };
+            min: [0,0,0],
+            max: [0,0,0],
+        }; 
 
         // Initiate physics
         this.physics = new Physics(this, this.collisions);
+        this.floorPhysics = new FloorPhysics();
         
         // Add key handler for blur toggle
         document.addEventListener('keydown', (e) => {
@@ -69,24 +74,32 @@ export class Game {
         // Prepare camera object for renderer
         this.updateCameraMatrices();
     }
+
+
+   
     
     addEntity(entity) {
         this.scene.entities.push(entity);
     }
     
     addEntities(entities) {
-        console.log(entities)
+        // console.log(entities)
         this.scene.entities.push(...entities);
     }
 
-    addEntityBox(entity) {
-        this.collisions.entities.push(entity);
-    }
     
     addEntitiesBox(entities) {
-        console.log(entities)
         this.collisions.entities.push(...entities);
     }
+
+    addEntitiesFloor(entities) {
+        this.floor.entities.push(...entities);
+        // Register floor collision mesh for exact collisions
+        this.floorPhysics.setFloorCollision(this.floor.entities);
+    }
+       
+    
+
 
     changeToVec(entities) {
         for (const entity of entities){
@@ -114,6 +127,8 @@ export class Game {
     }
     
     update(deltaTime) {
+        // console.log(this.isOnGround)
+        // console.log(this.transform.translation[1])
         // Update controller (handles movement)
         this.controller.update(0, deltaTime);
         
@@ -121,7 +136,8 @@ export class Game {
         this.controller.velocity[1] += this.gravity * deltaTime;
         
         // Apply floor collision (keep camera at eye level above floor)
-        const eyeLevel = this.floorHeight + 1.8;
+        const floorY = this.floorPhysics.getFloorHeightAt(this.transform.translation[0], this.transform.translation[2]);
+        const eyeLevel = floorY + 1.8;
         if (this.transform.translation[1] <= eyeLevel) {
             this.transform.translation[1] = eyeLevel;
             // Stop vertical velocity and mark as on ground

@@ -1,6 +1,6 @@
-import { vec3, mat4 } from '../lib/glm.js';
-import { getGlobalModelMatrix } from './core/SceneUtils.js';
-import { Transform } from './core/core.js';
+import { vec3, mat4 } from '../../lib/glm.js';
+import { getGlobalModelMatrix } from '../core/SceneUtils.js';
+import { Transform } from '../core/core.js';
 
 export class Physics {
 
@@ -29,7 +29,7 @@ export class Physics {
     getTransformedAABB(entity) {
         // Transform all vertices of the AABB from local to global space.
         // const matrix = getGlobalModelMatrix(entity);
-        console.log(entity)
+        // console.log(entity)
         const matrix = entity.transform.matrix;
         const { min, max } = entity.aabb;
         const vertices = [

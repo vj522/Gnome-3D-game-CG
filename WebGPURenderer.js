@@ -314,8 +314,11 @@ export class WebGPURenderer {
     }
     
     resizePostProcessing(width, height) {
+        //najprej shrani stare, ustvari nove, potem zbriši stare, drugeče error
+        const oldRenderTexture = this.renderTexture;
+        const oldDepthTexture = this.depthTexture;
+
         // Recreate render texture
-        this.renderTexture.destroy();
         this.renderTexture = this.device.createTexture({
             size: { width, height },
             format: this.preferredFormat,
@@ -324,7 +327,6 @@ export class WebGPURenderer {
         this.renderTextureView = this.renderTexture.createView();
         
         // Recreate depth texture
-        this.depthTexture.destroy();
         this.depthTexture = this.device.createTexture({
             size: { width, height },
             format: 'depth24plus',
@@ -350,6 +352,13 @@ export class WebGPURenderer {
                 }
             ]
         });
+
+       
+        queueMicrotask(() => {
+            oldRenderTexture.destroy();
+            oldDepthTexture.destroy();
+        }); 
+
     }
     
     createBufferFromData(data, usage) {
@@ -486,7 +495,7 @@ export class WebGPURenderer {
         let texture = this.textureCache.get(textureData);
         
         if (!texture && textureData.image) {
-            console.log('Creating texture:', textureData.image.src);
+            // console.log('Creating texture:', textureData.image.src);
             texture = await this.createTexture(textureData.image);
             this.textureCache.set(textureData, texture);
             console.log('Texture created successfully');
