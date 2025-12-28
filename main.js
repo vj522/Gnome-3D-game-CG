@@ -84,14 +84,17 @@ async function main() {
         console.log('GLTF model loaded');
 
         const loaderBox = new GLTFLoader();
-        const gltfDataBox = await loaderBox.load('objekti/collision_boxes2/map_with_boxes.gltf');
+        //boxes za drevesa, stene, meje površine
+        const gltfDataBox = await loaderBox.load('objekti/wall2/walls.gltf');
         console.log('GLTF model loaded');
+
 
         // Load floor collision GLTF (single object with exact collision)
         loadingDiv.textContent = 'Loading floor collision...';
         const floorLoader = new GLTFLoader();
         const floorData = await floorLoader.load('objekti/floor2/floor.gltf');
         console.log('Floor GLTF loaded');
+
         
         // Add all entities from GLTF to the scene
         
@@ -103,6 +106,7 @@ async function main() {
         game.changeToVec(gltfDataBox.entities);
         game.addTransform(gltfDataBox.entities);
         game.addEntitiesBox(gltfDataBox.entities);
+
 
         game.addEntitiesFloor(floorData.entities);
 
