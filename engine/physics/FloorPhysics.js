@@ -5,7 +5,7 @@ export class FloorPhysics {
     
     constructor() {
         this.floorMesh = null;
-        this.floorHeight = 24;
+        this.floorHeight = 10;
     }
 
     // Build floor collision mesh from a GLTF entity (or array of entities)

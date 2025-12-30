@@ -25,6 +25,34 @@ export class Scene {
 
     }
 
+     initTargetScene(targetScene){
+        this.sceneTrigger.targetScene = targetScene;
+    }
+
+    
+    checkTriggers(playerPos) {
+
+        const { min, max } = this.sceneTrigger.bounds;
+
+        const inBounds =
+            playerPos[0] >= min[0] && playerPos[0] <= max[0] &&
+            playerPos[1] >= min[1] && playerPos[1] <= max[1] &&
+            playerPos[2] >= min[2] && playerPos[2] <= max[2];
+
+
+        if (inBounds && !this.sceneTrigger.triggered) {
+            this.sceneTrigger.triggered = true; // mark as fired, se prestavimo v target sceno
+            console.log("in bound, trigger triggered");
+            return this.sceneTrigger;
+
+        } else if (!inBounds && this.sceneTrigger.triggered) {
+            console.log("yo")
+            this.sceneTrigger.triggered = false; // reset when leaving, dont enter endless limbo
+        }
+        
+        return null;
+    }
+
 
     addEntity(entity) {
         this.scene.entities.push(entity);
