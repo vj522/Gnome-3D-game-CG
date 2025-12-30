@@ -11,10 +11,10 @@ export class CaveScene extends Scene {
         this.loader = new GLTFLoader();
         this.sceneTrigger = {
             //change
-            bounds: {   min: [-22, 0, -69],  
-                        max: [-18, 50, -60], },
+            bounds: {   min: [-20, 0, -69],  
+                        max: [-11, 50, -65], },
             targetScene: null,
-            targetPosition: [3.5, 28.2, -18],
+            targetPosition: [3, 28.2, -17.5],
             targetYaw: 3.14,
             triggered: false,
         };
@@ -36,14 +36,14 @@ export class CaveScene extends Scene {
         this.addEntities(gltfData.entities);
 
 
-        // //boxes za drevesa, stene, meje površine
-        // const gltfDataBox = await this.loader.load('objekti/wall/forest_all_boxes.gltf');
-        // console.log('GLTF model loaded (forest collisions)');
+        //boxes za drevesa, stene, meje površine
+        const gltfDataBox = await this.loader.load('objekti/cave_wall/cave_lil.gltf');
+        console.log('GLTF model loaded (forest collisions)');
 
-        // this.changeToVec(gltfDataBox.entities);
-        // this.addTransform(gltfDataBox.entities);
-        // this.addEntitiesBox(gltfDataBox.entities);
-        // this.computeAABBs();
+        this.changeToVec(gltfDataBox.entities);
+        this.addTransform(gltfDataBox.entities);
+        this.addEntitiesBox(gltfDataBox.entities);
+        this.computeAABBs();
 
 
         // Load floor collision GLTF (single object with exact collision)

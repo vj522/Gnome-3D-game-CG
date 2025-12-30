@@ -10,10 +10,10 @@ export class ForestScene extends Scene {
         super(game);
         this.loader = new GLTFLoader();
         this.sceneTrigger = {
-            bounds: {   min: [2, 10, -18],  
+            bounds: {   min: [2, 10, -20],  
                         max: [4, 50, -17], },
             targetScene: null,
-            targetPosition: [-20,12.2,-66],
+            targetPosition: [-18,12.2,-67],
             targetYaw: 3.14,
             triggered: false,
         };

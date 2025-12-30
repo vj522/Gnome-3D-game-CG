@@ -34,6 +34,8 @@ export class Scene {
 
         const { min, max } = this.sceneTrigger.bounds;
 
+        console.log(playerPos)
+        
         const inBounds =
             playerPos[0] >= min[0] && playerPos[0] <= max[0] &&
             playerPos[1] >= min[1] && playerPos[1] <= max[1] &&
