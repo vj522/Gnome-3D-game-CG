@@ -9,10 +9,11 @@ export class CaveScene extends Scene {
     constructor(game) {
         super(game);
         this.loader = new GLTFLoader();
+        this.name = "Cave";
         this.sceneTrigger = {
             //change
-            bounds: {   min: [-20, 0, -69],  
-                        max: [-11, 50, -65], },
+            bounds: {   min: [-23, 0, -70],  
+                        max: [-17, 50, -64], },
             targetScene: null,
             targetPosition: [3, 28.2, -17.5],
             targetYaw: 3.14,

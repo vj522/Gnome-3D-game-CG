@@ -1,12 +1,12 @@
 // Main entry point for the game
 import { WebGPURenderer } from './WebGPURenderer.js';
-import { GLTFLoader } from './engine/loaders/GLTFLoader.js';
 import { Game } from './Game.js';
 
 
 
-async function main() {
-    const canvas = document.getElementById('glCanvas');
+export async function main(canvas) {
+
+    // const canvas = document.getElementById('glCanvas');
     const loadingDiv = document.getElementById('loading');
     
     // Initialize WebGPU
@@ -128,6 +128,3 @@ async function main() {
         loadingDiv.style.color = 'red';
     }
 }
-
-// Start the application
-main();

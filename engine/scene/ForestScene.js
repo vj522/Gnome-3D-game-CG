@@ -9,11 +9,12 @@ export class ForestScene extends Scene {
     constructor(game) {
         super(game);
         this.loader = new GLTFLoader();
+        this.name = "Forest";
         this.sceneTrigger = {
             bounds: {   min: [2, 10, -20],  
-                        max: [4, 50, -17], },
+                        max: [4, 50, -15], },
             targetScene: null,
-            targetPosition: [-18,12.2,-67],
+            targetPosition: [-21,12.2,-67],
             targetYaw: 3.14,
             triggered: false,
         };
