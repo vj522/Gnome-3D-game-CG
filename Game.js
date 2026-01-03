@@ -139,6 +139,9 @@ export class Game {
         // console.log(this.transform.translation);
         //scene specific physics, resolve collisions with objects
         this.scene.physics.update(0, deltaTime);
+
+        // Update items vezane na kamero (bakla v jami)
+        this.scene.updateHeldItems?.(this.transform, this.controller.velocity);
         
         // Update camera matrices
         this.updateCameraMatrices();

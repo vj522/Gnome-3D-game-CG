@@ -38,6 +38,10 @@ struct LightUniforms {
     padding1: f32,
     color: vec3f,
     padding2: f32,
+    pointLightPos: vec3f,    // Torch position
+    pointLightRadius: f32,   // Light falloff radius
+    pointLightColor: vec3f,  // Torch light color
+    padding3: f32,
 }
 
 @group(0) @binding(0) var<uniform> camera: CameraUniforms;
@@ -105,8 +109,29 @@ fn fragmentMain(input: VertexOutput) -> @location(0) vec4f {
     let spec = pow(max(dot(viewDir, reflectDir), 0.0), 32.0);
     let specular = 0.5 * spec * light.color;
     
-    // Combine lighting
+    // Combine ambient + directional lighting
     var result = (ambient + diffuse + specular) * baseColor.rgb;
+    
+    // Add point light from torch
+    let toPointLight = light.pointLightPos - input.worldPosition;
+    let distToPointLight = length(toPointLight);
+    
+    // Only apply if within radius
+    if (distToPointLight < light.pointLightRadius) {
+        let pointLightDir = normalize(toPointLight);
+        let pointDiff = max(dot(normal, pointLightDir), 0.0);
+        
+        // Attenuation: linearno slabljenje namesto kvadratnega
+        var attenuation = 1.0 - (distToPointLight / light.pointLightRadius);
+        
+        // Diffuse light od torcha
+        let pointDiffuse = pointDiff * light.pointLightColor * attenuation;
+        result += pointDiffuse * baseColor.rgb;
+        
+        // Tudi ambient svetloba od torcha (vidna tudi na stenah ki niso obrnjene k torchu)
+        let pointAmbient = 0.3 * light.pointLightColor * attenuation;
+        result += pointAmbient * baseColor.rgb;
+    }
     
     // No fog
     

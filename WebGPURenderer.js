@@ -215,9 +215,9 @@ export class WebGPURenderer {
             usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
         });
         
-        // Light uniform buffer (vec3 + padding + vec3 + padding = 32 bytes)
+        // Light uniform buffer (vec3 + f32 + vec3 + f32 + vec3 + f32 = 64 bytes)
         this.lightUniformBuffer = this.device.createBuffer({
-            size: 32,
+            size: 64,
             usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
         });
         
@@ -620,10 +620,39 @@ export class WebGPURenderer {
         cameraData.set(camera.position, 32);
         this.device.queue.writeBuffer(this.cameraUniformBuffer, 0, cameraData);
         
-        // Update light uniforms
-        const lightData = new Float32Array(8); // 32 bytes / 4
-        lightData.set([0.3, -1.0, 0.5], 0); // direction
-        lightData.set([1.0, 1.0, 0.95], 4); // color
+        // Update light uniforms (include torch point light if available)
+        const lightData = new Float32Array(16); // 64 bytes / 4
+        lightData.set([0.3, -1.0, 0.5], 0);     // direction (offset 0)
+        lightData.set([1.0, 1.0, 0.95], 4);     // color (offset 16 bytes)
+        
+        // Point light from torch (if scene has it)
+        if (scene.torch && scene.torch.modelMatrix) {
+            const torchPos = [
+                scene.torch.modelMatrix[12],
+                scene.torch.modelMatrix[13],
+                scene.torch.modelMatrix[14]
+            ];
+            console.log('Torch pozicija:', torchPos);
+            console.log('Pred set - lightData[8]:', lightData[8]);
+            lightData.set(torchPos, 8);         // pointLightPos (offset 32 bytes)
+            console.log('Po set - lightData[8]:', lightData[8], 'lightData[9]:', lightData[9], 'lightData[10]:', lightData[10]);
+            lightData[11] = 15.0;                // pointLightRadius - manjši radij
+            console.log('Radij nastavljen na:', lightData[11]);
+            lightData.set([3.5, 2.0, 0.6], 12); // pointLightColor - še bolj intenzivna
+            console.log('Barva nastavljena. Vsa svetlobna polja:');
+            console.log('Direction:', lightData[0], lightData[1], lightData[2]);
+            console.log('Color:', lightData[4], lightData[5], lightData[6]);
+            console.log('PointPos:', lightData[8], lightData[9], lightData[10]);
+            console.log('Radius:', lightData[11]);
+            console.log('PointColor:', lightData[12], lightData[13], lightData[14]);
+        } else {
+            // No torch: set far away position and small radius
+            console.log('Nema torcha (scene.torch =', scene.torch, ')');
+            lightData.set([0, -1000, 0], 8);
+            lightData[11] = 0.01;
+            lightData.set([0, 0, 0], 12);
+        }
+        
         this.device.queue.writeBuffer(this.lightUniformBuffer, 0, lightData);
         
         // Update post-process uniforms

@@ -23,6 +23,9 @@ export class Scene {
         this.physics = new Physics(game, this.collisions);
         this.floorPhysics = new FloorPhysics();
 
+        // Torch light (če je v sceni)
+        this.torch = null;
+
     }
 
      initTargetScene(targetScene){
@@ -34,7 +37,7 @@ export class Scene {
 
         const { min, max } = this.sceneTrigger.bounds;
 
-        console.log(playerPos)
+        //console.log(playerPos)
         
         const inBounds =
             playerPos[0] >= min[0] && playerPos[0] <= max[0] &&
@@ -74,12 +77,18 @@ export class Scene {
         // Register floor collision mesh for exact collisions
         this.floorPhysics.setFloorCollision(this.floor.entities);
     }
-       
+
+    // Hook za update animacij vezanih na kamero (npr. bakla v jami)
+    updateHeldItems(playerTransform, playerVelocity) {
+        // Default: ni-op, scene-specifični override pa prepiše to
+    }
 
     clear() {
-        this.entities.length = 0;
-        this.collisionEntities.length = 0;
-        this.floorEntities.length = 0;
+        // Počisti entities, collisions in floor entitete
+        // Uporabljamo splice namesto preusmerjanja, da ostane reference pravilna
+        this.scene.entities.splice(0);
+        this.collisions.entities.splice(0);
+        this.floor.entities.splice(0);
     }
 
     /* ==============================
