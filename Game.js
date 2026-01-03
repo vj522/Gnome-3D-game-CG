@@ -58,11 +58,13 @@ export class Game {
             max: [0,0,0],
         }; 
 
-
+        //scenes
         this.forestScene = null;
         this.caveScene = null;
+        this.scene = null; 
+        this.sceneNameDiv = document.getElementById('sceneName');
 
-                
+
         // Add key handler for blur toggle
         document.addEventListener('keydown', (e) => {
             if (e.code === 'Digit8') {
@@ -70,24 +72,19 @@ export class Game {
                 console.log('Blur effect:', this.blurEnabled ? 'ON' : 'OFF');
             }
         });
-
-
-        // // Floor height (for collision)
-        // this.floorHeight = 26.0; // Fallback forest floor height
-        // this.floorMesh = null; // will hold triangle list for exact collisions
-        
-
-        this.scene = null; 
+   
     }
 
     async init_scene(){
         //load scene (forest), later switch to cave
-        // this.scene = new ForestScene(this);
         this.forestScene = new ForestScene(this);
         this.caveScene = new CaveScene(this);
         this.caveScene.initTargetScene(this.forestScene);
         this.forestScene.initTargetScene(this.caveScene);
+        //we start in a forest
         this.scene = this.forestScene;
+        // this.scene=this.caveScene;
+        this.sceneNameDiv.textContent = this.scene.name;
         this.gravity = -20.0; // Gravity acceleration
         this.jumpVelocity = 15.0;
         await this.scene.load();
@@ -179,6 +176,8 @@ export class Game {
         this.transform.translation = newScene.targetPosition;
         this.controller.yaw = newScene.targetYaw;
         
+
+        this.sceneNameDiv.textContent = this.scene.name;
 
 
         // // Reset player position if needed

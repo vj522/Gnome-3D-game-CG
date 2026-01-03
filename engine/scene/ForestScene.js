@@ -7,6 +7,7 @@ export class ForestScene extends Scene {
     constructor(game) {
         super(game);
         this.loader = new GLTFLoader();
+        this.name = "Forest";
         this.sceneTrigger = {
             bounds: {   min: [2, 10, -20],  
                         max: [4, 50, -15], },
@@ -25,7 +26,7 @@ export class ForestScene extends Scene {
         const loadingDiv = document.getElementById('loading');
 
         // Load GLTF model
-        loadingDiv.textContent = 'Loading forest model...';
+        loadingDiv.textContent = 'Loading forest';
         const gltfData = await this.loader.load('objekti/ForestScene/forest/forest.gltf');
         console.log('GLTF model loaded (forest)');
 
