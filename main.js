@@ -62,10 +62,17 @@ async function main() {
         }
         return shuffled;
     }
-    
     // Function to place object at position (defined at module level for Transform access)
     async function placeObjectAt(game, renderer, path, x, y, z) {
         try {
+            // Check if this object path is already loaded to prevent duplicates
+            const pathInCorrect = game.correct_name.includes(path);
+            const pathInWrong = game.wrong.some(obj => obj.objectType === path);
+            
+            if (pathInCorrect || pathInWrong) {
+                return; // Skip if already loaded
+            }
+            
             const objLoader = new GLTFLoader();
             const objData = await objLoader.load(path);
             
@@ -103,9 +110,31 @@ async function main() {
                 });
                 entity.transform = transform;
                 entity.modelMatrix = transform.matrix;
+                
+                // Mark entity with object type for tracking
+                entity.objectType = path;
+                entity.isCollectable = true; // Mark as a collectable object
             }
             
             game.addEntities(objData.entities);
+            
+            // Create a wrapper object that groups all entities as one logical object
+            const objectWrapper = {
+                entities: objData.entities,
+                objectType: path,
+                transform: objData.entities[0] ? objData.entities[0].transform : null,
+                isCollectable: true
+            };
+            
+            // Track object as a single unit in appropriate array
+            game.objectCount++;
+            
+            if (game.objectCount <= 3) {
+                game.correct.push(objectWrapper);
+                game.correct_name.push(path);
+            } else {
+                game.wrong.push(objectWrapper);
+            }
             
             // Preload textures for this object
             const tempScene = { entities: objData.entities };
@@ -209,20 +238,37 @@ async function main() {
 
         // Load all random objects
         (async () => {
-            // Randomly select 5 out of 8 coordinates
+            // Create a copy of objectPaths and shuffle it to ensure variety
+            const availableObjectPaths = shuffleArray(objectPaths);
+            let objectPathIndex = 0;
+            
+            // Randomly select 5 out of 8 coordinates for placement
             const shuffledCoordinates = shuffleArray(coordinates).slice(0, 5);
             
-            // For each selected coordinate, randomly select an object
-            for (const coord of shuffledCoordinates) {
-                const randomObjectPath = objectPaths[Math.floor(Math.random() * objectPaths.length)];
-                await placeObjectAt(game, renderer, randomObjectPath, coord.x, coord.y, coord.z);
+            // Place first 3 objects in the correct array at random coordinates
+            const firstThreeCoords = shuffledCoordinates.slice(0, 3);
+            for (let i = 0; i < firstThreeCoords.length && objectPathIndex < availableObjectPaths.length; i++) {
+                const coord = firstThreeCoords[i];
+                const objectPath = availableObjectPaths[objectPathIndex];
+                await placeObjectAt(game, renderer, objectPath, coord.x, coord.y, coord.z);
+                objectPathIndex++;
             }
-
-            // Place a random object at player spawn location
-            const playerSpawnObjectPath = objectPaths[Math.floor(Math.random() * objectPaths.length)];
-            await placeObjectAt(game, renderer, playerSpawnObjectPath, 0, 30.0, 0);
             
-            console.log('All random objects loaded successfully');
+            // Place remaining objects at remaining coordinates
+            const remainingCoords = shuffledCoordinates.slice(3);
+            for (const coord of remainingCoords) {
+                if (objectPathIndex < availableObjectPaths.length) {
+                    const objectPath = availableObjectPaths[objectPathIndex];
+                    await placeObjectAt(game, renderer, objectPath, coord.x, coord.y, coord.z);
+                    objectPathIndex++;
+                }
+            }
+            
+            // Place the 6th object at player spawn location (if we have a 6th unique object)
+            if (objectPathIndex < availableObjectPaths.length) {
+                const playerSpawnObjectPath = availableObjectPaths[objectPathIndex];
+                await placeObjectAt(game, renderer, playerSpawnObjectPath, 0, 30.0, 0);
+            }
         })();
 
 
@@ -241,6 +287,34 @@ async function main() {
         
         // Hide loading screen
         loadingDiv.style.display = 'none';
+        
+        // Debug: Log all arrays after game setup
+        
+        // Verify no objects exist in multiple arrays
+        game.verifyArrayIntegrity();
+        
+        // Function to update correct-names display
+        function updateCorrectNamesDisplay() {
+            const list = document.getElementById('correct-names-list');
+            list.innerHTML = '';
+            for (const name of game.correct_name) {
+                const li = document.createElement('li');
+                // Extract just the object folder name from the path
+                const objectName = name.split('/')[1] || name;
+                li.textContent = objectName;
+                list.appendChild(li);
+            }
+        }
+        
+        // Initial display update
+        updateCorrectNamesDisplay();
+        
+        // Override tryCollectNearbyObject to update display when objects are collected
+        const originalTryCollect = game.tryCollectNearbyObject.bind(game);
+        game.tryCollectNearbyObject = function() {
+            originalTryCollect();
+            updateCorrectNamesDisplay();
+        };
         
         // Render loop
         let lastTime = 0;
