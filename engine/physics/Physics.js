@@ -27,6 +27,8 @@ export class Physics {
     }
 
     getTransformedAABB(entity) {
+
+        if (!entity.aabb) return null;
         // Transform all vertices of the AABB from local to global space.
         // const matrix = getGlobalModelMatrix(entity);
         // console.log(entity)

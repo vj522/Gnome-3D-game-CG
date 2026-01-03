@@ -2,17 +2,18 @@ import { mat4, vec3 } from './lib/glm.js';
 import { Camera } from './engine/core/Camera.js'
 import { FirstPersonController } from './engine/controllers/FirstPersonController.js';
 import { Transform } from './engine/core/Transform.js';
-import { Physics } from './engine/physics/Physics.js';
-import { FloorPhysics } from './engine/physics/FloorPhysics.js';
+
+import { Scene } from './engine/scene/Scene.js';
+import { ForestScene } from './engine/scene/ForestScene.js';
+import { CaveScene } from './engine/scene/CaveScene.js';
+
 
 export class Game {
+
     constructor(canvas, renderer) {
         this.canvas = canvas;
         this.renderer = renderer;
-        this.scene = { entities: [] };
-        this.collisions = { entities: [] };
-        this.floor = { entities: [] };
-        
+
         // Create player camera
         this.camera = new Camera({
             aspect: canvas.width / canvas.height,
@@ -22,11 +23,11 @@ export class Game {
         });
 
         
-        
         // Create a transform component for the player
         this.transform = new Transform({
-            translation: [0, 30.0, 0], // Player starting height
-            rotation: [0, 0, 0, 1],
+            translation: [0, 30.0, 0], // Player starting height for forest, the first starting point
+            // translation: [-20,0,-66], //start point za cave
+            rotation: [0, 0, 0, 1],  //forest
             scale: [1, 1, 1],
         });
         
@@ -34,6 +35,7 @@ export class Game {
         this.controller = new FirstPersonController(this, canvas, {
             pitch: 0,
             yaw: 0,
+            // yaw: 3.14,  //enter the cave
             velocity: [0, 0, 0],
             acceleration: 20,
             maxSpeed: 8,
@@ -41,10 +43,7 @@ export class Game {
             pointerSensitivity: 0.002,
         });
         
-        // Floor height (for collision)
-        this.floorHeight = 26.0; // Fallback forest floor height
-        this.floorMesh = null; // will hold triangle list for exact collisions
-        
+
         // Jump mechanics
         this.gravity = -20.0; // Gravity acceleration
         this.jumpVelocity = 15.0; // Initial jump velocity (increased for higher jumps)
@@ -70,6 +69,12 @@ export class Game {
         // Blur effect timer
         this.blurTimer = null; // Timer for temporary blur effect
 
+
+        this.forestScene = null;
+        this.caveScene = null;
+
+                
+        // Add key handler for blur toggle
         // Initiate physics
         this.physics = new Physics(this, this.collisions);
         this.floorPhysics = new FloorPhysics();
@@ -86,61 +91,31 @@ export class Game {
                 this.tryCollectNearbyObject();
             }
         });
+
+
+        // // Floor height (for collision)
+        // this.floorHeight = 26.0; // Fallback forest floor height
+        // this.floorMesh = null; // will hold triangle list for exact collisions
         
+
+        this.scene = null; 
+    }
+
+    async init_scene(){
+        //load scene (forest), later switch to cave
+        // this.scene = new ForestScene(this);
+        this.forestScene = new ForestScene(this);
+        this.caveScene = new CaveScene(this);
+        this.caveScene.initTargetScene(this.forestScene);
+        this.forestScene.initTargetScene(this.caveScene);
+        this.scene = this.forestScene;
+        await this.scene.load();
+
         // Prepare camera object for renderer
         this.updateCameraMatrices();
     }
 
 
-   
-    
-    addEntity(entity) {
-        this.scene.entities.push(entity);
-    }
-    
-    addEntities(entities) {
-        // console.log(entities)
-        this.scene.entities.push(...entities);
-    }
-
-    
-    addEntitiesBox(entities) {
-        this.collisions.entities.push(...entities);
-    }
-
-    addEntitiesFloor(entities) {
-        this.floor.entities.push(...entities);
-        // Register floor collision mesh for exact collisions
-        this.floorPhysics.setFloorCollision(this.floor.entities);
-    }
-       
-    
-
-
-    changeToVec(entities) {
-        for (const entity of entities){
-            for (const primitive of entity.primitives){
-                const positions = primitive.mesh.positions;
-                primitive.mesh.vertices = []
-                for (let i = 0; i < positions.length; i += 3) {
-                    const v = vec3.fromValues(
-                        positions[i],
-                        positions[i + 1],
-                        positions[i + 2]
-                    );
-                    primitive.mesh.vertices.push(v);
-                }
-            }
-        }
-    }
-
-    addTransform(entities){
-        for (const entity of entities){
-            entity.transform = new Transform({
-                matrix: mat4.clone(entity.modelMatrix)
-            });
-        }
-    }
     
     /**
      * Finds nearby objects within the collection radius
@@ -352,6 +327,7 @@ export class Game {
     }
     
     update(deltaTime) {
+        
         // console.log(this.isOnGround)
         // console.log(this.transform.translation[1])
         // Update controller (handles movement)
@@ -360,8 +336,10 @@ export class Game {
         // Apply gravity
         this.controller.velocity[1] += this.gravity * deltaTime;
         
+
         // Apply floor collision (keep camera at eye level above floor)
-        const floorY = this.floorPhysics.getFloorHeightAt(this.transform.translation[0], this.transform.translation[2]);
+        const floorY = this.scene.floorPhysics.getFloorHeightAt(this.transform.translation[0], this.transform.translation[2]);
+
         const eyeLevel = floorY + 1.8;
         if (this.transform.translation[1] <= eyeLevel) {
             this.transform.translation[1] = eyeLevel;
@@ -380,13 +358,64 @@ export class Game {
             this.isOnGround = false;
         }
 
-        // console.log(this.transform.translation);
+        //logging coordinates when moved
+        const speed = Math.hypot(this.controller.velocity[0], this.controller.velocity[2]);
+        // if (speed > 0.01) { // small threshold to avoid logging tiny movements
+        //     console.log("Player coordinates:", this.transform.translation);
+        //     console.log("Player rotation:", this.transform.rotation);
+        // }
 
-        this.physics.update(0, deltaTime);
+        
+        // console.log(this.transform.translation);
+        //scene specific physics, resolve collisions with objects
+        this.scene.physics.update(0, deltaTime);
         
         // Update camera matrices
         this.updateCameraMatrices();
+
+
+        //SCENE TRIGGER
+        const PlayerPosition = this.transform.translation;
+        const newScene = this.scene.checkTriggers(PlayerPosition); //vrne null ali novo sceno
+
+        if (newScene){
+            this.changeScene(newScene);
+        }
+
+
     }
+
+    async changeScene(newScene) {
+        console.log("Switching scenes...");
+
+        //new scene je sceneTriggers z bounds, target scene, position, zay, triggered?
+
+
+        const sceneInstance = newScene.targetScene;
+
+        await sceneInstance.load();                // Load GLTF, setup entities
+        await this.renderer.preloadTextures(sceneInstance); // Upload textures to GPU
+
+        this.scene = sceneInstance;
+        this.scene.sceneTrigger.triggered = true;
+
+        this.transform.translation = newScene.targetPosition;
+        this.controller.yaw = newScene.targetYaw;
+
+
+        // // Reset player position if needed
+        // if (newScene==ForestScene){
+        //     this.transform.translation = [3.021825211729329, 27.88363407877016, -18.413587828218382];
+        //     this.yaw = 0
+        // }
+        // else
+        //     this.transform.translation = [-20,0,-66];  //??? kam pademo v startu ko preidemo
+
+        // Update camera matrices for renderer
+        this.updateCameraMatrices();
+    }
+    
+
     
     updateCameraMatrices() {
         // Update camera aspect ratio if window resized
@@ -399,6 +428,7 @@ export class Game {
         // Store matrices for renderer (projectionMatrix is already a getter in Camera)
         this.camera.viewMatrix = viewMatrix;
         this.camera.position = this.transform.translation;
+
     }
     
     render() {
