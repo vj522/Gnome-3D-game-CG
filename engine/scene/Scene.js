@@ -34,7 +34,9 @@ export class Scene {
 
         const { min, max } = this.sceneTrigger.bounds;
 
-        console.log(playerPos)
+        // //to get the coordinates for boxes, later outt!!
+        // console.log(playerPos)
+        // console.log(playerPos);
         
         const inBounds =
             playerPos[0] >= min[0] && playerPos[0] <= max[0] &&
@@ -48,7 +50,7 @@ export class Scene {
             return this.sceneTrigger;
 
         } else if (!inBounds && this.sceneTrigger.triggered) {
-            console.log("yo")
+            console.log("out of the trigger area")
             this.sceneTrigger.triggered = false; // reset when leaving, dont enter endless limbo
         }
         

@@ -1,7 +1,5 @@
 import { Scene } from "./Scene.js";
 import { GLTFLoader } from "../loaders/GLTFLoader.js"
-import { CaveScene } from "./CaveScene.js";
-
 
 
 export class ForestScene extends Scene {
@@ -9,13 +7,17 @@ export class ForestScene extends Scene {
     constructor(game) {
         super(game);
         this.loader = new GLTFLoader();
+        this.name = "Forest";
         this.sceneTrigger = {
             bounds: {   min: [2, 10, -20],  
-                        max: [4, 50, -17], },
+                        max: [4, 50, -15], },
             targetScene: null,
-            targetPosition: [-18,12.2,-67],
+            targetPosition: [-21,12.2,-67],
             targetYaw: 3.14,
             triggered: false,
+            // Jump mechanics
+            gravity: -20.0, // Gravity acceleration
+            jumpVelocity: 15.0, // Initial jump velocity (increased for higher jumps)
         };
     }
 
@@ -24,7 +26,7 @@ export class ForestScene extends Scene {
         const loadingDiv = document.getElementById('loading');
 
         // Load GLTF model
-        loadingDiv.textContent = 'Loading forest model...';
+        loadingDiv.textContent = 'Loading forest';
         const gltfData = await this.loader.load('objekti/ForestScene/forest/forest.gltf');
         console.log('GLTF model loaded (forest)');
 

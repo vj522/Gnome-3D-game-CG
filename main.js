@@ -1,6 +1,5 @@
 // Main entry point for the game
 import { WebGPURenderer } from './WebGPURenderer.js';
-import { GLTFLoader } from './engine/loaders/GLTFLoader.js';
 import { Game } from './Game.js';
 
 import { Transform } from './engine/core/Transform.js';
@@ -10,8 +9,9 @@ import {
 } from './engine/core/MeshUtils.js';
 
 
-async function main() {
-    const canvas = document.getElementById('glCanvas');
+export async function main(canvas) {
+
+    // const canvas = document.getElementById('glCanvas');
     const loadingDiv = document.getElementById('loading');
     
     // Initialize WebGPU
@@ -164,7 +164,7 @@ async function main() {
         
         console.log('Shaders loaded successfully');
         
-        // loadingDiv.textContent = 'Loading game';
+        loadingDiv.textContent = 'Loading game';
 
 
         // Create renderer
@@ -218,7 +218,7 @@ async function main() {
 
         
         // Preload textures
-        loadingDiv.textContent = 'Loading textures...';
+        // loadingDiv.textContent = 'Loading textures...';
         await renderer.preloadTextures(game.scene);
         console.log('Textures preloaded');
         
@@ -286,6 +286,3 @@ async function main() {
         loadingDiv.style.color = 'red';
     }
 }
-
-// Start the application
-main();
