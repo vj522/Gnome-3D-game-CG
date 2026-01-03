@@ -1,6 +1,7 @@
 // Main entry point for the game
 import { WebGPURenderer } from './WebGPURenderer.js';
 import { Game } from './Game.js';
+import { GLTFLoader } from './engine/loaders/GLTFLoader.js';
 
 import { Transform } from './engine/core/Transform.js';
 import {
