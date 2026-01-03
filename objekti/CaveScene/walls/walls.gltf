@@ -209,12 +209,12 @@
 			"scale":[
 				0.7402833700180054,
 				1.6962075233459473,
-				0.5017017126083374
+				0.5751525163650513
 			],
 			"translation":[
 				-21.649816513061523,
 				14.255183219909668,
-				-72.36297607421875
+				-73.5797348022461
 			]
 		},
 		{
@@ -358,26 +358,9 @@
 				"collisions":true
 			},
 			"mesh":16,
-			"name":"Cube.016",
-			"scale":[
-				0.7216078042984009,
-				1.6962075233459473,
-				0.8017072677612305
-			],
-			"translation":[
-				-33.2326545715332,
-				14.255183219909668,
-				9.523858070373535
-			]
-		},
-		{
-			"extras":{
-				"collisions":true
-			},
-			"mesh":17,
 			"name":"Cube.017",
 			"scale":[
-				0.5111221075057983,
+				0.5815622806549072,
 				1.6962075233459473,
 				0.3684642016887665
 			],
@@ -391,7 +374,7 @@
 			"extras":{
 				"collisions":true
 			},
-			"mesh":18,
+			"mesh":17,
 			"name":"Cube.018",
 			"scale":[
 				0.36472928524017334,
@@ -408,7 +391,7 @@
 			"extras":{
 				"collisions":true
 			},
-			"mesh":19,
+			"mesh":18,
 			"name":"Cube.019",
 			"scale":[
 				0.36472928524017334,
@@ -425,7 +408,7 @@
 			"extras":{
 				"collisions":true
 			},
-			"mesh":20,
+			"mesh":19,
 			"name":"Cube.020",
 			"scale":[
 				0.36472928524017334,
@@ -436,6 +419,29 @@
 				-26.859140396118164,
 				14.255183219909668,
 				-4.01986837387085
+			]
+		},
+		{
+			"extras":{
+				"collisions":true
+			},
+			"mesh":20,
+			"name":"back_wall",
+			"rotation":[
+				0.5229572653770447,
+				0.004846713971346617,
+				-0.8495886325836182,
+				0.0684952363371849
+			],
+			"scale":[
+				0.7896355986595154,
+				1.70052170753479,
+				0.6054479479789734
+			],
+			"translation":[
+				-33.26979064941406,
+				14.255183219909668,
+				8.960375785827637
 			]
 		}
 	],
@@ -649,7 +655,7 @@
 			]
 		},
 		{
-			"name":"Cube.018",
+			"name":"Cube.019",
 			"primitives":[
 				{
 					"attributes":{
@@ -662,7 +668,7 @@
 			]
 		},
 		{
-			"name":"Cube.019",
+			"name":"Cube.020",
 			"primitives":[
 				{
 					"attributes":{
@@ -675,7 +681,7 @@
 			]
 		},
 		{
-			"name":"Cube.020",
+			"name":"Cube.021",
 			"primitives":[
 				{
 					"attributes":{
@@ -688,7 +694,7 @@
 			]
 		},
 		{
-			"name":"Cube.021",
+			"name":"Cube.022",
 			"primitives":[
 				{
 					"attributes":{
@@ -701,13 +707,14 @@
 			]
 		},
 		{
-			"name":"Cube.022",
+			"name":"Cube.007",
 			"primitives":[
 				{
 					"attributes":{
 						"POSITION":61,
 						"NORMAL":62,
-						"TEXCOORD_0":63
+						"TEXCOORD_0":63,
+						"COLOR_0":64
 					},
 					"indices":3
 				}
@@ -1308,6 +1315,13 @@
 			"componentType":5126,
 			"count":24,
 			"type":"VEC2"
+		},
+		{
+			"bufferView":64,
+			"componentType":5123,
+			"count":24,
+			"normalized":true,
+			"type":"VEC4"
 		}
 	],
 	"bufferViews":[
@@ -1694,12 +1708,18 @@
 			"byteLength":192,
 			"byteOffset":16008,
 			"target":34962
+		},
+		{
+			"buffer":0,
+			"byteLength":192,
+			"byteOffset":16200,
+			"target":34962
 		}
 	],
 	"buffers":[
 		{
-			"byteLength":16200,
-			"uri":"cave_lil.bin"
+			"byteLength":16392,
+			"uri":"walls.bin"
 		}
 	]
 }

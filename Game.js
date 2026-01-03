@@ -3,7 +3,6 @@ import { Camera } from './engine/core/Camera.js'
 import { FirstPersonController } from './engine/controllers/FirstPersonController.js';
 import { Transform } from './engine/core/Transform.js';
 
-import { Scene } from './engine/scene/Scene.js';
 import { ForestScene } from './engine/scene/ForestScene.js';
 import { CaveScene } from './engine/scene/CaveScene.js';
 
@@ -35,7 +34,6 @@ export class Game {
         this.controller = new FirstPersonController(this, canvas, {
             pitch: 0,
             yaw: 0,
-            // yaw: 3.14,  //enter the cave
             velocity: [0, 0, 0],
             acceleration: 20,
             maxSpeed: 8,
@@ -44,9 +42,11 @@ export class Game {
         });
         
 
-        // Jump mechanics
-        this.gravity = -20.0; // Gravity acceleration
-        this.jumpVelocity = 15.0; // Initial jump velocity (increased for higher jumps)
+        // // Jump mechanics
+        // this.gravity = -20.0; // Gravity acceleration
+        // this.jumpVelocity = 15.0; // Initial jump velocity (increased for higher jumps)
+        this.gravity = null;
+        this.jumpVelocity = null;
         this.isOnGround = true;
         
         // Visual effects
@@ -88,6 +88,8 @@ export class Game {
         this.caveScene.initTargetScene(this.forestScene);
         this.forestScene.initTargetScene(this.caveScene);
         this.scene = this.forestScene;
+        this.gravity = -20.0; // Gravity acceleration
+        this.jumpVelocity = 15.0;
         await this.scene.load();
 
         // Prepare camera object for renderer
@@ -126,6 +128,7 @@ export class Game {
         if (this.controller.keys['Space'] && this.isOnGround) {
             this.controller.velocity[1] = this.jumpVelocity;
             this.isOnGround = false;
+            console.log("jump vel" + this.jumpVelocity);
         }
 
         //logging coordinates when moved
@@ -167,10 +170,15 @@ export class Game {
         await this.renderer.preloadTextures(sceneInstance); // Upload textures to GPU
 
         this.scene = sceneInstance;
+        this.gravity = sceneInstance.sceneTrigger.gravity;
+        this.jumpVelocity = sceneInstance.sceneTrigger.jumpVelocity;
+
+
         this.scene.sceneTrigger.triggered = true;
 
         this.transform.translation = newScene.targetPosition;
         this.controller.yaw = newScene.targetYaw;
+        
 
 
         // // Reset player position if needed

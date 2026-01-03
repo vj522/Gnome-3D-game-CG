@@ -1,7 +1,5 @@
 import { Scene } from "./Scene.js";
 import { GLTFLoader } from "../loaders/GLTFLoader.js"
-import { CaveScene } from "./CaveScene.js";
-
 
 
 export class ForestScene extends Scene {
@@ -11,11 +9,14 @@ export class ForestScene extends Scene {
         this.loader = new GLTFLoader();
         this.sceneTrigger = {
             bounds: {   min: [2, 10, -20],  
-                        max: [4, 50, -17], },
+                        max: [4, 50, -15], },
             targetScene: null,
-            targetPosition: [-18,12.2,-67],
+            targetPosition: [-21,12.2,-67],
             targetYaw: 3.14,
             triggered: false,
+            // Jump mechanics
+            gravity: -20.0, // Gravity acceleration
+            jumpVelocity: 15.0, // Initial jump velocity (increased for higher jumps)
         };
     }
 
