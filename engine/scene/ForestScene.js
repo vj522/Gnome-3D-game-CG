@@ -25,7 +25,7 @@ export class ForestScene extends Scene {
         const loadingDiv = document.getElementById('loading');
 
         // Load GLTF model
-        loadingDiv.textContent = 'Loading forest model...';
+        loadingDiv.textContent = 'Loading forest';
         const gltfData = await this.loader.load('objekti/ForestScene/forest/forest.gltf');
         console.log('GLTF model loaded (forest)');
 

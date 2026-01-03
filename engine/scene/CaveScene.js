@@ -28,7 +28,7 @@ export class CaveScene extends Scene {
         const loadingDiv = document.getElementById('loading');
 
         // Load GLTF model
-        loadingDiv.textContent = 'Loading cave model...';
+        loadingDiv.textContent = 'Loading cave';
         const gltfData = await this.loader.load('objekti/jama/cave_texture.gltf');
         console.log('GLTF model loaded (cave)');
 

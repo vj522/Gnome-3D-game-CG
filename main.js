@@ -65,7 +65,7 @@ export async function main(canvas) {
         
         console.log('Shaders loaded successfully');
         
-        // loadingDiv.textContent = 'Loading game';
+        loadingDiv.textContent = 'Loading game';
 
 
         // Create renderer
@@ -88,7 +88,7 @@ export async function main(canvas) {
 
         
         // Preload textures
-        loadingDiv.textContent = 'Loading textures...';
+        // loadingDiv.textContent = 'Loading textures...';
         await renderer.preloadTextures(game.scene);
         console.log('Textures preloaded');
         

@@ -49,7 +49,7 @@ export class Scene {
             return this.sceneTrigger;
 
         } else if (!inBounds && this.sceneTrigger.triggered) {
-            console.log("yo")
+            console.log("out of the trigger area")
             this.sceneTrigger.triggered = false; // reset when leaving, dont enter endless limbo
         }
         
