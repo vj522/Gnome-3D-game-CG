@@ -91,6 +91,34 @@
             font-size: 14px;
             pointer-events: none;
         }
+        
+        #correct-names {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            color: white;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 14px;
+            pointer-events: none;
+            max-width: 300px;
+        }
+        
+        #correct-names h3 {
+            margin-bottom: 8px;
+            color: #4ade80;
+        }
+        
+        #correct-names-list {
+            list-style: none;
+        }
+        
+        #correct-names-list li {
+            padding: 4px 0;
+            color: #a0f0a0;
+        }
+        
 
         #emojiBox {
             position: absolute;
@@ -154,6 +182,12 @@
     
     <div id="loading" style="display:none;">Loading...</div>
     
+    <div id="correct-names">
+        <h3>Correct Objects:</h3>
+        <ul id="correct-names-list"></ul>
+    </div>
+    
+    <script type="module" src="main.js"></script>
     <script type="module">
         import { main } from './main.js'; // your WebGPU main game
 
