@@ -17,6 +17,12 @@ export class ForestScene extends Scene {
             targetYaw: 3.14,
             triggered: false,
         };
+
+        // Forest fog settings
+        this.fog = {
+            color: [1.0, 1.0, 1.0],  // Bolj bela megla (prej: 0.8, 0.8, 0.9)
+            density: 0.03
+        };
     }
 
     async load() {

@@ -23,6 +23,12 @@ export class Scene {
         this.physics = new Physics(game, this.collisions);
         this.floorPhysics = new FloorPhysics();
 
+        // Default fog settings
+        this.fog = {
+            color: [0.7, 0.8, 0.9],
+            density: 0.005
+        };
+
     }
 
      initTargetScene(targetScene){
@@ -34,7 +40,7 @@ export class Scene {
 
         const { min, max } = this.sceneTrigger.bounds;
 
-        console.log(playerPos)
+        //console.log(playerPos)
         
         const inBounds =
             playerPos[0] >= min[0] && playerPos[0] <= max[0] &&

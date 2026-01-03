@@ -209,9 +209,9 @@ export class WebGPURenderer {
     }
     
     createUniformBuffers() {
-        // Camera uniform buffer (mat4 + mat4 + vec3 + padding = 144 bytes)
+        // Camera uniform buffer (mat4 + mat4 + vec3 + padding + vec3 + padding + f32 + 3 paddings = 176 bytes)
         this.cameraUniformBuffer = this.device.createBuffer({
-            size: 144,
+            size: 176,
             usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
         });
         
@@ -614,16 +614,27 @@ export class WebGPURenderer {
     
     render(scene, camera, blurEnabled = false) {
         // Update camera uniforms
-        const cameraData = new Float32Array(36); // 144 bytes / 4
+        const cameraData = new Float32Array(44); // 176 bytes / 4
         cameraData.set(camera.viewMatrix, 0);
         cameraData.set(camera.projectionMatrix, 16);
         cameraData.set(camera.position, 32);
+        // Fog parameters from scene
+        if (!scene.fog) {
+            scene.fog = { color: [0.8, 0.8, 0.9], density: 0.05 };
+        }
+        cameraData.set(scene.fog.color, 36);
+        cameraData[40] = scene.fog.density;
         this.device.queue.writeBuffer(this.cameraUniformBuffer, 0, cameraData);
         
         // Update light uniforms
+        let lightDir = [0.3, -1.0, 0.5];
+        let lightCol = [1.0, 1.0, 0.95];
+        if (scene.name === "Cave") {
+            lightCol = [0.3, 0.3, 0.3]; // Dimmer light for cave
+        }
         const lightData = new Float32Array(8); // 32 bytes / 4
-        lightData.set([0.3, -1.0, 0.5], 0); // direction
-        lightData.set([1.0, 1.0, 0.95], 4); // color
+        lightData.set(lightDir, 0); // direction
+        lightData.set(lightCol, 4); // color
         this.device.queue.writeBuffer(this.lightUniformBuffer, 0, lightData);
         
         // Update post-process uniforms
@@ -637,7 +648,7 @@ export class WebGPURenderer {
         const renderPassDescriptor = {
             colorAttachments: [{
                 view: this.renderTextureView,
-                clearValue: { r: 0.5, g: 0.6, b: 0.7, a: 1.0 }, // Sky blue
+                clearValue: { r: 0.75, g: 0.88, b: 1.0, a: 1.0 }, // Svetlo modro nebo (manj intenzivno)
                 loadOp: 'clear',
                 storeOp: 'store'
             }],

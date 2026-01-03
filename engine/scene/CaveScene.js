@@ -18,6 +18,12 @@ export class CaveScene extends Scene {
             targetYaw: 3.14,
             triggered: false,
         };
+
+        // Cave fog settings - less fog
+        this.fog = {
+            color: [0.1, 0.1, 0.1], // Dark fog for cave
+            density: 0.000
+        };
     }
 
 

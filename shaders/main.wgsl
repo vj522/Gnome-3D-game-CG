@@ -18,6 +18,12 @@ struct CameraUniforms {
     projectionMatrix: mat4x4f,
     cameraPosition: vec3f,
     padding1: f32, // Alignment padding
+    fogColor: vec3f,
+    padding2: f32,
+    fogDensity: f32,
+    padding3: f32,
+    padding4: f32,
+    padding5: f32,
 }
 
 struct ModelUniforms {
@@ -108,7 +114,23 @@ fn fragmentMain(input: VertexOutput) -> @location(0) vec4f {
     // Combine lighting
     var result = (ambient + diffuse + specular) * baseColor.rgb;
     
-    // No fog
+    // Apply distance fog
+    if (camera.fogDensity > 0.001) {
+        let distance = length(input.worldPosition - camera.cameraPosition);
+        let fogFactor = exp(-camera.fogDensity * distance);
+        result = mix(camera.fogColor, result, fogFactor);
+    }
+    
+    // Apply ground fog at boundaries (only near ground)
+    if (camera.fogDensity > 0.001) {
+        let boundaryDist = max(abs(input.worldPosition.x) - 5.0, abs(input.worldPosition.z) - 5.0);
+        if (boundaryDist > 0.0) {
+            let groundFogColor = vec3f(0.9, 0.95, 1.0);  // Svetlo modro-bela megla
+            let groundFogFactor = clamp(boundaryDist / 30.0, 0.0, 1.0);
+            let heightFactor = clamp((60.0 - input.worldPosition.y) / 60.0, 0.0, 2.0);
+            result = mix(result, groundFogColor, groundFogFactor * heightFactor * 1.0);
+        }
+    }
     
     return vec4f(result, baseColor.a);
 }
