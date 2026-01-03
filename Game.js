@@ -74,11 +74,6 @@ export class Game {
         this.caveScene = null;
 
                 
-        // Add key handler for blur toggle
-        // Initiate physics
-        this.physics = new Physics(this, this.collisions);
-        this.floorPhysics = new FloorPhysics();
-        
         // Add key handlers
         document.addEventListener('keydown', (e) => {
             // Blur toggle (Digit8)

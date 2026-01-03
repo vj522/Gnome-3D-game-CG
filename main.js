@@ -71,6 +71,7 @@ async function main() {
             const pathInWrong = game.wrong.some(obj => obj.objectType === path);
             
             if (pathInCorrect || pathInWrong) {
+                console.log(`Skipping duplicate object: ${path}`);
                 return; // Skip if already loaded
             }
             
@@ -78,10 +79,10 @@ async function main() {
             const objData = await objLoader.load(path);
             
             // Ensure meshes have vertices arrays populated
-            game.changeToVec(objData.entities);
+            game.scene.changeToVec(objData.entities);
             
             // Snap to ground at this XZ
-            const floorY = game.floorPhysics.getFloorHeightAt(x, z);
+            const floorY = game.scene.floorPhysics.getFloorHeightAt(x, z);
             const yOnGround = floorY;
 
             // Compute model's local bottom (minY) across all primitives to correct for pivot
@@ -117,7 +118,7 @@ async function main() {
                 entity.isCollectable = true; // Mark as a collectable object
             }
             
-            game.addEntities(objData.entities);
+            game.scene.addEntities(objData.entities);
             
             // Create a wrapper object that groups all entities as one logical object
             const objectWrapper = {
@@ -174,16 +175,6 @@ async function main() {
         game = new Game(canvas, renderer);
         await game.init_scene();
         console.log('Game created');
-        
-
-        
-        //di vidim kako se narišejo boxi, potem to ven!!
-        // game.scene.addEntities(gltfDataBox.entities);
-
-        // console.log(gltfData.entities);
-        
-
-        console.log(`Added ${gltfData.entities.length} entities (forest) to scene`);
 
         // Add random objects at specified coordinates
         const coordinates = [
@@ -194,7 +185,9 @@ async function main() {
             { x: -11.97, y: 26.82, z: -3.27 },
             { x: -16.33, y: 27.20, z: -2.32 },
             { x: -11.30, y: 28.65, z: -18.46 },
-            { x: -4.41,  y: 28.34, z: -19.89 }
+            { x: -4.41,  y: 28.34, z: -19.89 },
+            { x: -22.79, y: 12.62, z: -5.97 },
+            { x: -18.06, y: 12.18, z: -31.42 }
         ];
 
         const objectPaths = [
@@ -205,40 +198,22 @@ async function main() {
             'objekti/berries/scene.gltf'
         ];
 
-        // Load all random objects
-        (async () => {
-            // Create a copy of objectPaths and shuffle it to ensure variety
-            const availableObjectPaths = shuffleArray(objectPaths);
-            let objectPathIndex = 0;
-            
-            // Randomly select 5 out of 8 coordinates for placement
-            const shuffledCoordinates = shuffleArray(coordinates).slice(0, 5);
-            
-            // Place first 3 objects in the correct array at random coordinates
-            const firstThreeCoords = shuffledCoordinates.slice(0, 3);
-            for (let i = 0; i < firstThreeCoords.length && objectPathIndex < availableObjectPaths.length; i++) {
-                const coord = firstThreeCoords[i];
-                const objectPath = availableObjectPaths[objectPathIndex];
-                await placeObjectAt(game, renderer, objectPath, coord.x, coord.y, coord.z);
-                objectPathIndex++;
-            }
-            
-            // Place remaining objects at remaining coordinates
-            const remainingCoords = shuffledCoordinates.slice(3);
-            for (const coord of remainingCoords) {
-                if (objectPathIndex < availableObjectPaths.length) {
-                    const objectPath = availableObjectPaths[objectPathIndex];
-                    await placeObjectAt(game, renderer, objectPath, coord.x, coord.y, coord.z);
-                    objectPathIndex++;
-                }
-            }
-            
-            // Place the 6th object at player spawn location (if we have a 6th unique object)
-            if (objectPathIndex < availableObjectPaths.length) {
-                const playerSpawnObjectPath = availableObjectPaths[objectPathIndex];
-                await placeObjectAt(game, renderer, playerSpawnObjectPath, 0, 30.0, 0);
-            }
-        })();
+        // Load all 5 unique objects - first 3 go to correct, remaining 2 go to wrong
+        // Shuffle object paths to randomize which objects appear
+        const shuffledObjectPaths = shuffleArray(objectPaths);
+        
+        // Randomly select 5 out of 8 coordinates for placement
+        const shuffledCoordinates = shuffleArray(coordinates).slice(0, 5);
+        
+        // Place all 5 objects (each object path used exactly once)
+        for (let i = 0; i < 5 && i < shuffledObjectPaths.length; i++) {
+            const coord = shuffledCoordinates[i];
+            const objectPath = shuffledObjectPaths[i];
+            await placeObjectAt(game, renderer, objectPath, coord.x, coord.y, coord.z);
+            console.log(`Placed object ${i + 1}/5: ${objectPath} at (${coord.x}, ${coord.y}, ${coord.z})`);
+        }
+        
+        console.log(`Objects spawned - Correct: ${game.correct.length}, Wrong: ${game.wrong.length}`);
 
 
         
