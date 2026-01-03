@@ -49,6 +49,14 @@ export class Game {
         this.jumpVelocity = 15.0; // Initial jump velocity (increased for higher jumps)
         this.isOnGround = true;
         
+        // Torch light toggle (Shift key)
+        this.torchLightEnabled = false;
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Shift') {
+                this.torchLightEnabled = !this.torchLightEnabled; // Toggle
+            }
+        });
+        
         // Visual effects
         this.blurEnabled = false;
 
@@ -205,7 +213,7 @@ export class Game {
     }
     
     render() {
-        this.renderer.render(this.scene, this.camera, this.blurEnabled);
+        this.renderer.render(this.scene, this.camera, this.blurEnabled, this.torchLightEnabled);
     }
     
     // Methods for FirstPersonController compatibility

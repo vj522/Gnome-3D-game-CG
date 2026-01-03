@@ -612,7 +612,7 @@ export class WebGPURenderer {
         return bindGroup;
     }
     
-    render(scene, camera, blurEnabled = false) {
+    render(scene, camera, blurEnabled = false, torchLightEnabled = false) {
         // Update camera uniforms
         const cameraData = new Float32Array(36); // 144 bytes / 4
         cameraData.set(camera.viewMatrix, 0);
@@ -625,8 +625,8 @@ export class WebGPURenderer {
         lightData.set([0.3, -1.0, 0.5], 0);     // direction (offset 0)
         lightData.set([1.0, 1.0, 0.95], 4);     // color (offset 16 bytes)
         
-        // Point light from torch (if scene has it)
-        if (scene.torch && scene.torch.modelMatrix) {
+        // Point light from torch (if scene has it AND shift is pressed)
+        if (torchLightEnabled && scene.torch && scene.torch.modelMatrix) {
             const torchPos = [
                 scene.torch.modelMatrix[12],
                 scene.torch.modelMatrix[13],
