@@ -75,7 +75,7 @@ export class Game {
         document.addEventListener('keydown', (e) => {
             if (e.code === 'Digit8') {
                 this.blurEnabled = !this.blurEnabled;
-                console.log('Blur effect:', this.blurEnabled ? 'ON' : 'OFF');
+                // Blur effect toggled
             }
         });
 
@@ -167,7 +167,7 @@ export class Game {
     }
 
     async changeScene(newScene) {
-        console.log("Switching scenes...");
+        // Switching scenes
 
         //new scene je sceneTriggers z bounds, target scene, position, zay, triggered?
 

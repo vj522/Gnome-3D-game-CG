@@ -209,9 +209,10 @@ export class WebGPURenderer {
     }
     
     createUniformBuffers() {
-        // Camera uniform buffer (mat4 + mat4 + vec3 + padding = 144 bytes)
+        // Camera uniform buffer (mat4 + mat4 + vec3 + padding). Some GPUs round up
+        // the required binding size; use 176 bytes to satisfy pipeline requirements.
         this.cameraUniformBuffer = this.device.createBuffer({
-            size: 144,
+            size: 176,
             usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
         });
         
@@ -498,7 +499,7 @@ export class WebGPURenderer {
             // console.log('Creating texture:', textureData.image.src);
             texture = await this.createTexture(textureData.image);
             this.textureCache.set(textureData, texture);
-            console.log('Texture created successfully');
+            // Texture created successfully
         }
         
         return texture;
@@ -614,7 +615,7 @@ export class WebGPURenderer {
     
     render(scene, camera, blurEnabled = false, torchLightEnabled = false) {
         // Update camera uniforms
-        const cameraData = new Float32Array(36); // 144 bytes / 4
+        const cameraData = new Float32Array(44); // 176 bytes / 4
         cameraData.set(camera.viewMatrix, 0);
         cameraData.set(camera.projectionMatrix, 16);
         cameraData.set(camera.position, 32);
@@ -632,22 +633,11 @@ export class WebGPURenderer {
                 scene.torch.modelMatrix[13],
                 scene.torch.modelMatrix[14]
             ];
-            console.log('Torch pozicija:', torchPos);
-            console.log('Pred set - lightData[8]:', lightData[8]);
             lightData.set(torchPos, 8);         // pointLightPos (offset 32 bytes)
-            console.log('Po set - lightData[8]:', lightData[8], 'lightData[9]:', lightData[9], 'lightData[10]:', lightData[10]);
-            lightData[11] = 15.0;                // pointLightRadius - manjši radij
-            console.log('Radij nastavljen na:', lightData[11]);
+            lightData[11] = 15.0;               // pointLightRadius - manjši radij
             lightData.set([3.5, 2.0, 0.6], 12); // pointLightColor - še bolj intenzivna
-            console.log('Barva nastavljena. Vsa svetlobna polja:');
-            console.log('Direction:', lightData[0], lightData[1], lightData[2]);
-            console.log('Color:', lightData[4], lightData[5], lightData[6]);
-            console.log('PointPos:', lightData[8], lightData[9], lightData[10]);
-            console.log('Radius:', lightData[11]);
-            console.log('PointColor:', lightData[12], lightData[13], lightData[14]);
         } else {
             // No torch: set far away position and small radius
-            console.log('Nema torcha (scene.torch =', scene.torch, ')');
             lightData.set([0, -1000, 0], 8);
             lightData[11] = 0.01;
             lightData.set([0, 0, 0], 12);
@@ -885,7 +875,6 @@ export class WebGPURenderer {
     
     // Async method to pre-load textures
     async preloadTextures(scene) {
-        console.log('Starting texture preload...');
         const promises = [];
         
         for (const entity of scene.entities) {
@@ -900,10 +889,8 @@ export class WebGPURenderer {
         }
         
         await Promise.all(promises);
-        console.log(`Preloaded ${promises.length} textures`);
         
         // Now create all material bind groups
-        console.log('Creating material bind groups...');
         for (const entity of scene.entities) {
             if (entity.primitives) {
                 for (const primitive of entity.primitives) {
@@ -913,7 +900,6 @@ export class WebGPURenderer {
                 }
             }
         }
-        console.log('All material bind groups created');
     }
     
     createPrimitiveMaterialBindGroup(primitive) {

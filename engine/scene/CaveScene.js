@@ -44,7 +44,7 @@ export class CaveScene extends Scene {
         // Load GLTF model
         loadingDiv.textContent = 'Loading cave model...';
         const gltfData = await this.loader.load('objekti/jama/cave_texture.gltf');
-        console.log('GLTF model loaded (cave)');
+        // Cave GLTF loaded
 
         this.changeToVec(gltfData.entities);
         this.addTransform(gltfData.entities);
@@ -53,7 +53,7 @@ export class CaveScene extends Scene {
 
         //boxes za drevesa, stene, meje površine
         const gltfDataBox = await this.loader.load('objekti/cave_wall/cave_lil.gltf');
-        console.log('GLTF model loaded (forest collisions)');
+        // Collision boxes loaded
 
         this.changeToVec(gltfDataBox.entities);
         this.addTransform(gltfDataBox.entities);
@@ -63,7 +63,7 @@ export class CaveScene extends Scene {
 
         // Load floor collision GLTF (single object with exact collision)
         const gltfDataFloor = await this.loader.load('objekti/cave_floor/floor.gltf');
-        console.log('Floor GLTF loaded (floor)');
+        // Floor collision GLTF loaded
 
         this.addEntitiesFloor(gltfDataFloor.entities);
 
@@ -74,7 +74,7 @@ export class CaveScene extends Scene {
                 this.torch = torchData.entities[0];
                 this.torchBaseMatrix = mat4.clone(this.torch.modelMatrix ?? mat4.create());
                 this.addEntities([this.torch]);
-                console.log('Torch loaded and added to cave scene');
+                // Torch loaded and added to cave scene
             }
         } catch (err) {
             console.warn('Torch GLTF could not be loaded:', err);
