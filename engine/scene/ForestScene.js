@@ -1,5 +1,7 @@
+import { mat4 } from "../../lib/glm.js";
 import { Scene } from "./Scene.js";
-import { GLTFLoader } from "../loaders/GLTFLoader.js"
+import { GLTFLoader } from "../loaders/GLTFLoader.js";
+import { Transform } from "../core/Transform.js";
 import { CaveScene } from "./CaveScene.js";
 
 
@@ -53,6 +55,57 @@ export class ForestScene extends Scene {
         console.log('Floor GLTF loaded (floor)');
 
         this.addEntitiesFloor(gltfDataFloor.entities);
+
+                // Oblaki iz seznama pozicij
+                const cloudData = await this.loader.load('objekti/cloud1/cloud1.gltf');
+                this.changeToVec(cloudData.entities);
+                this.addTransform(cloudData.entities);
+
+                // Osnovna matrika brez translacije, da pozicije res določimo sami
+                const baseMatrix = mat4.clone(cloudData.entities[0].modelMatrix);
+                baseMatrix[12] = 0; // x translation
+                baseMatrix[13] = 0; // y translation
+                baseMatrix[14] = 0; // z translation
+
+                const positions = [
+                    [14, 25, 22],
+                    [6, 25, 32],
+                    [-4, 25, 30],
+                    [30, 22, 30],
+                    [0, 22, 35],
+                    [0, 22, -35],
+                    [-35, 22, 0],
+                    [35, 22, 0],
+                ];
+                // Rotacije za vsak oblak (radiani, okoli Y); po potrebi prilagodi
+                const rotationsY = [
+                    0,
+                    Math.PI * 0.55,
+                    Math.PI * 0.28,
+                    Math.PI * 0.28,
+                    Math.PI * 0.75,
+                    Math.PI * 0.95,
+                    Math.PI * 1.15,
+                    Math.PI * 1.35,
+                ];
+                const scale = 4;
+
+                const clouds = positions.map((pos, i) => {
+                    const m = mat4.create();
+                    mat4.translate(m, m, pos);
+                    const ry = rotationsY[i % rotationsY.length] || 0;
+                    mat4.rotateY(m, m, ry);
+                    mat4.scale(m, m, [scale, scale, scale]);
+                    mat4.multiply(m, m, baseMatrix);
+
+                    return {
+                        ...cloudData.entities[0],
+                        modelMatrix: m,
+                        transform: new Transform({ matrix: m }),
+                    };
+                });
+
+                this.addEntities(clouds);
 
     }
 
