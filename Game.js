@@ -64,7 +64,7 @@ export class Game {
         this.collected = []; // Objects that have been collected
         this.correct_name = []; // Paths of objects in correct array
         this.objectCount = 0; // Counter to track when first 3 objects have been spawned
-        this.collectionRadius = 5; // Radius for nearby object detection
+        this.collectionRadius = 4; // Radius for nearby object detection
         
         // Blur effect timer
         this.blurTimer = null; // Timer for temporary blur effect
