@@ -189,13 +189,12 @@ export async function main(canvas) {
             { x: -16.33, y: 27.20, z: -2.32 },
             { x: -11.30, y: 28.65, z: -18.46 },
             { x: -4.41,  y: 28.34, z: -19.89 },
-            { x: -22.79, y: 12.62, z: -5.97 },
-            { x: -18.06, y: 12.18, z: -31.42 }
+            // { x: -22.79, y: 12.62, z: -5.97 },
+            // { x: -18.06, y: 12.18, z: -31.42 }
         ];
 
         const objectPaths = [
             'objekti/flower/scene.gltf',
-            'objekti/flowers/scene.gltf',
             'objekti/strawberry/strawberry.gltf',
             'objekti/crystal_stone_rock/scene.gltf',
             'objekti/berries/scene.gltf',
@@ -209,8 +208,8 @@ export async function main(canvas) {
         // Randomly select 5 out of 8 coordinates for placement
         const shuffledCoordinates = shuffleArray(coordinates).slice(0, 6);
         
-        // Place all 6 objects (each object path used exactly once)
-        for (let i = 0; i < 6 && i < shuffledObjectPaths.length; i++) {
+        // Place all 5 objects (each object path used exactly once)
+        for (let i = 0; i < 5 && i < shuffledObjectPaths.length; i++) {
             const coord = shuffledCoordinates[i];
             const objectPath = shuffledObjectPaths[i];
             await placeObjectAt(game, renderer, objectPath, coord.x, coord.y, coord.z);
@@ -238,7 +237,6 @@ export async function main(canvas) {
         // Map object paths (or folder names) to emojis
         const objectEmojiMap = {
             'flower': '🌹',
-            'flowers': '💐',
             'strawberry': '🍓',
             'crystal_stone_rock': '🪨',
             'berries': '🍒',
@@ -263,11 +261,19 @@ export async function main(canvas) {
             }
         }
 
+        
+
         // Override tryCollectNearbyObject to update display when objects are collected
-        const originalTryCollect1 = game.tryCollectNearbyObject.bind(game);
+        const originalTryCollect = game.tryCollectNearbyObject.bind(game);
         game.tryCollectNearbyObject = function() {
-            originalTryCollect1();
+
+            originalTryCollect();
+
             updateCorrectEmojiDisplay(); // update emojis instead of names
+
+            if (game.correct.length === 0){
+                window.showWin();
+            }
         };
 
         

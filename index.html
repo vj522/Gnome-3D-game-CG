@@ -101,7 +101,7 @@
             padding: 10px;
             border-radius: 5px;
             font-size: 14px;
-            width: 300px; 
+            width: 250px; 
             pointer-events: none;
 
             display: flex;
@@ -120,11 +120,22 @@
             margin: 0;
         }
 
-
         #correct-emojis span {
-            font-size: 28px;          /* bigger emojis */
+            font-size: 20px;          /* bigger emojis */
             line-height: 1;
         } 
+
+        #time {
+            position: absolute;
+            top: 50px;
+            right: 20px;
+            color: white;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 14px;
+            pointer-events: none;  
+        }
         
         
         #loading {
@@ -139,11 +150,44 @@
             border-radius: 10px;
         }
 
+        #endScreen {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            color: white;
+            font-size: 36px;
+            text-align: center;
+        }
+
+        #endMessage {
+            margin-bottom: 30px;
+        }
+
+        #restartButton {
+            padding: 12px 28px;
+            font-size: 18px;
+            cursor: pointer;
+            border-radius: 8px;
+            border: none;
+            background: rgba(255,255,255,0.1);
+            color: white;
+        }
+
+        #restartButton:hover {
+            background: rgba(255,255,255,0.25);
+        }
+
+
 
     </style>
 </head>
-<body>
 
+<body>
     <!-- Instruction overlay -->
     <div id="startScreen">
         <div id="startContent">
@@ -154,7 +198,6 @@
         </div>
 
         <button id="startButton">Begin The Search</button>
-
     </div>
 
 
@@ -176,35 +219,120 @@
         <span class="items-label">Find These Items:</span>
         <ul id="correct-emojis"></ul>
     </div>
-    
-    <script type="module" src="main.js"></script>
-    <script type="module">
-        import { main } from './main.js'; // your WebGPU main game
 
+    <div id="time" style="display:none;">
+        ⏱: <span id="timeValue">100</span>
+    </div>
+
+    <div id="endScreen" style="display:none;">
+        <div id="endMessage"></div>
+        <button id="restartButton">Try Again</button>
+    </div>
+    
+
+
+
+
+    <script type="module" src="main.js"></script>
+    
+
+    <script type="module">
+        import { main } from './main.js';
+
+        // ---------- DOM ELEMENTS ----------
         const startScreen = document.getElementById('startScreen');
         const startButton = document.getElementById('startButton');
-        const canvas = document.getElementById('glCanvas');
+        const restartButton = document.getElementById('restartButton');
 
-        startButton.addEventListener('click', async () => {
-            console.log('Start button clicked!');
+        const canvas = document.getElementById('glCanvas');
+        const loadingDiv = document.getElementById('loading');
+
+        const endScreen = document.getElementById('endScreen');
+        const endMessage = document.getElementById('endMessage');
+
+        const info = document.getElementById('info');
+        const sceneName = document.getElementById('sceneName');
+        const correctItems = document.getElementById('correct-items');
+        const timeBox = document.getElementById('time');
+        const timeValue = document.getElementById('timeValue');
+
+        // ---------- TIMER ----------
+        let timeLeft = 100;
+        let timerInterval = null;
+
+        function startTimer() {
+            if (timerInterval) clearInterval(timerInterval);
+
+            timeValue.textContent = timeLeft;
+
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                timeValue.textContent = timeLeft;
+
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    timeValue.textContent = 0;
+                    showLose();
+                }
+            }, 1000);
+        }
+
+        // ---------- END SCREENS ----------
+        window.showWin = function() {
+            clearInterval(timerInterval);
+            endMessage.innerHTML  = "🎉 Congratulations! 🎉 <br> You found all ingredients!";
+            endScreen.style.display = 'flex';
+            document.exitPointerLock?.();
+        }
+
+        function showLose() {
+            clearInterval(timerInterval);
+            endMessage.innerHTML  = "You ran out of time.. <br> The village goes hungry on this special day.";
+            endScreen.style.display = 'flex';
+            document.exitPointerLock?.();
+        }
+
+        // ---------- START / RESTART ----------
+        async function startGame() {
+            // Reset UI
+            endScreen.style.display = 'none';
             startScreen.style.display = 'none';
+
+            timeLeft = 100;
+
+            // Show canvas & HUD
             canvas.style.display = 'block';
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
-            canvas.requestPointerLock?.();
 
-            // Show HUD elements
-            document.getElementById('info').style.display = 'block';
-            document.getElementById('sceneName').style.display = 'block';
-            document.getElementById('correct-items').style.display = 'flex'; // emojiBox uses flex layout
+            info.style.display = 'block';
+            sceneName.style.display = 'block';
+            correctItems.style.display = 'flex';
+            timeBox.style.display = 'block';
 
-            // Show loading if needed
-            const loadingDiv = document.getElementById('loading');
+            // Loading
             loadingDiv.style.display = 'block';
 
-            await main(canvas, document.getElementById('loading'));
-        });
+            // Start game
+            await main(canvas, loadingDiv);
+
+            // Wait for user to click the canvas to lock the pointer
+            startTimer();
+
+            canvas.addEventListener('click', function lockPointerOnce() {
+                canvas.requestPointerLock?.();
+                canvas.removeEventListener('click', lockPointerOnce);
+            });
+        }
+
+
+        // ---------- BUTTONS ----------
+        startButton.addEventListener('click', startGame);
+        restartButton.addEventListener('click', startGame);
+
     </script>
+
+
 
 </body>
 </html>
