@@ -64,7 +64,7 @@ export class Game {
         this.collected = []; // Objects that have been collected
         this.correct_name = []; // Paths of objects in correct array
         this.objectCount = 0; // Counter to track when first 3 objects have been spawned
-        this.collectionRadius = 15.0; // Radius for nearby object detection
+        this.collectionRadius = 15; // Radius for nearby object detection
         
         // Blur effect timer
         this.blurTimer = null; // Timer for temporary blur effect
@@ -131,6 +131,7 @@ export class Game {
             if (distance <= this.collectionRadius) {
                 nearbyObjects.push(entity);
             }
+            
         }
         
         return nearbyObjects;
@@ -245,6 +246,12 @@ export class Game {
             // Add to collected array
             this.collected.push(closestObject);
             
+            // Enable halo flag for these entities
+            for (const entity of closestObject.entities) {
+                entity.showHalo = true; // mark them for halo
+            }
+
+
             // Verify array integrity
             this.verifyArrayIntegrity();
             return;
@@ -361,7 +368,6 @@ export class Game {
         // }
 
         
-        // console.log(this.transform.translation);
         //scene specific physics, resolve collisions with objects
         this.scene.physics.update(0, deltaTime);
         
@@ -376,7 +382,6 @@ export class Game {
         if (newScene){
             this.changeScene(newScene);
         }
-
 
     }
 

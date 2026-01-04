@@ -92,50 +92,41 @@
             pointer-events: none;
         }
         
-        #correct-names {
+        #correct-items {
             position: absolute;
             top: 10px;
-            right: 10px;
+            right: 15px;
             color: white;
             background: rgba(0, 0, 0, 0.7);
             padding: 10px;
             border-radius: 5px;
             font-size: 14px;
+            width: 300px; 
             pointer-events: none;
-            max-width: 300px;
-        }
-        
-        #correct-names h3 {
-            margin-bottom: 8px;
-            color: #4ade80;
-        }
-        
-        #correct-names-list {
-            list-style: none;
-        }
-        
-        #correct-names-list li {
-            padding: 4px 0;
-            color: #a0f0a0;
-        }
-        
 
-        #emojiBox {
-            position: absolute;
-            top: 20px;
-            left: 50%; /* center horizontally */
-            transform: translateX(-50%);
-            background: rgba(255, 255, 255, 0.2);
-            color: white;
-            padding: 8px 12px;
-            border-radius: 12px;
-            font-family: sans-serif;
-            font-size: 24px;
-            pointer-events: none;
             display: flex;
-            gap: 8px;
+            align-items: center; /* stretch items to take full width */
+            gap: 10px; /* space between items */
         }
 
+
+        /* container for emojis */
+        #correct-emojis {
+            list-style: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;              
+            padding: 0;
+            margin: 0;
+        }
+
+
+        #correct-emojis span {
+            font-size: 28px;          /* bigger emojis */
+            line-height: 1;
+        } 
+        
+        
         #loading {
             position: absolute;
             top: 50%;
@@ -158,8 +149,8 @@
         <div id="startContent">
             <h1>Gnome</h1>
             <p>Greetings dear traveller. I ask you to lend me you skills of observation for i must find some rare ingredients to craft a truly magical dish </p>
-            <p>Use WASD to move, Space to jump and E to collect items in the correct order and when you enter the mystical cave be prepared to swiftly use the flashlight pressing Shift button </p>
-            <p>But beware, if you collect the ingredients in the wrong order you shall poison me and i shant be able to prepare a delicious feast for my hundredth-year celebration </p>     
+            <p>Use WASD to move, Space to jump and P to pick up the items and when you enter the mystical cave be prepared to swiftly use the flashlight pressing Shift button </p>
+            <p>But beware, if you collect the wrong ingredients you shall poison me and i shant be able to prepare a delicious feast for my hundredth-year celebration </p>     
         </div>
 
         <button id="startButton">Begin The Search</button>
@@ -171,20 +162,19 @@
     <canvas id="glCanvas" style="display:none;"></canvas>
     <div id="info" style="display:none;">
         <div>Click to lock pointer</div>
-        <div>WASD -> Move</div>
-        <div>Space -> Jump</div>
-        <div>E -> Collect item</div>
+        <div>Move the mouse - View</div>
+        <div>WASD - Move</div>
+        <div>Space - Jump</div>
+        <div>P - Pick up item</div>
     </div>
-
-    <div id="emojiBox" style="display:none;"></div>
 
     <div id="sceneName" style="display:none;"></div>
     
     <div id="loading" style="display:none;">Loading...</div>
     
-    <div id="correct-names">
-        <h3>Correct Objects:</h3>
-        <ul id="correct-names-list"></ul>
+    <div id="correct-items" style="display:none;">
+        <span class="items-label">Find These Items:</span>
+        <ul id="correct-emojis"></ul>
     </div>
     
     <script type="module" src="main.js"></script>
@@ -206,7 +196,7 @@
             // Show HUD elements
             document.getElementById('info').style.display = 'block';
             document.getElementById('sceneName').style.display = 'block';
-            document.getElementById('emojiBox').style.display = 'flex'; // emojiBox uses flex layout
+            document.getElementById('correct-items').style.display = 'flex'; // emojiBox uses flex layout
 
             // Show loading if needed
             const loadingDiv = document.getElementById('loading');

@@ -101,8 +101,8 @@ export async function main(canvas) {
 
             // Scale overrides: 'flower' 5x smaller, 'strawberry' 10x smaller
             const isFlower = path.includes('/flower/scene.gltf');
-            const isStrawberry = path.includes('/strawberry/scene.gltf');
-            const uniformScale = isStrawberry ? 0.01 : (isFlower ? 0.02 : 0.1);
+            const isStrawberry = path.includes('/strawberry/strawberry.gltf');
+            const uniformScale = isStrawberry ? 1 : (isFlower ? 0.02 : 0.1);
             const groundedY = yOnGround - minYLocal * uniformScale;
             
             for (const entity of objData.entities) {
@@ -194,9 +194,10 @@ export async function main(canvas) {
         const objectPaths = [
             'objekti/flower/scene.gltf',
             'objekti/flowers/scene.gltf',
-            'objekti/strawberry/scene.gltf',
+            'objekti/strawberry/strawberry.gltf',
             'objekti/crystal_stone_rock/scene.gltf',
-            'objekti/berries/scene.gltf'
+            'objekti/berries/scene.gltf',
+            'objekti/mushrooms/mushrooms.gltf'
         ];
 
         // Load all 5 unique objects - first 3 go to correct, remaining 2 go to wrong
@@ -204,10 +205,10 @@ export async function main(canvas) {
         const shuffledObjectPaths = shuffleArray(objectPaths);
         
         // Randomly select 5 out of 8 coordinates for placement
-        const shuffledCoordinates = shuffleArray(coordinates).slice(0, 5);
+        const shuffledCoordinates = shuffleArray(coordinates).slice(0, 6);
         
-        // Place all 5 objects (each object path used exactly once)
-        for (let i = 0; i < 5 && i < shuffledObjectPaths.length; i++) {
+        // Place all 6 objects (each object path used exactly once)
+        for (let i = 0; i < 6 && i < shuffledObjectPaths.length; i++) {
             const coord = shuffledCoordinates[i];
             const objectPath = shuffledObjectPaths[i];
             await placeObjectAt(game, renderer, objectPath, coord.x, coord.y, coord.z);
@@ -231,29 +232,47 @@ export async function main(canvas) {
         // Verify no objects exist in multiple arrays
         game.verifyArrayIntegrity();
         
-        // Function to update correct-names display
-        function updateCorrectNamesDisplay() {
-            const list = document.getElementById('correct-names-list');
-            list.innerHTML = '';
-            for (const name of game.correct_name) {
-                const li = document.createElement('li');
-                // Extract just the object folder name from the path
-                const objectName = name.split('/')[1] || name;
-                li.textContent = objectName;
-                list.appendChild(li);
+
+        // Map object paths (or folder names) to emojis
+        const objectEmojiMap = {
+            'flower': '🌹',
+            'flowers': '💐',
+            'strawberry': '🍓',
+            'crystal_stone_rock': '🪨',
+            'berries': '🍒',
+            'mushrooms': '🍄'
+        };
+
+        function updateCorrectEmojiDisplay() {
+            const emojiBox = document.getElementById('correct-emojis');
+            emojiBox.innerHTML = ''; // Clear previous emojis
+
+            for (const path of game.correct_name) {
+                // Extract folder name from path
+                const folderName = path.split('/')[1] || path;
+
+                // Lookup emoji
+                const emoji = objectEmojiMap[folderName] || '❓';
+
+                // Create a span for each emoji
+                const span = document.createElement('span');
+                span.textContent = emoji;
+                emojiBox.appendChild(span);
             }
         }
+
+        // Override tryCollectNearbyObject to update display when objects are collected
+        const originalTryCollect1 = game.tryCollectNearbyObject.bind(game);
+        game.tryCollectNearbyObject = function() {
+            originalTryCollect1();
+            updateCorrectEmojiDisplay(); // update emojis instead of names
+        };
+
         
         // Initial display update
-        updateCorrectNamesDisplay();
-        
-        // Override tryCollectNearbyObject to update display when objects are collected
-        const originalTryCollect = game.tryCollectNearbyObject.bind(game);
-        game.tryCollectNearbyObject = function() {
-            originalTryCollect();
-            updateCorrectNamesDisplay();
-        };
-        
+        updateCorrectEmojiDisplay();
+
+
         // Render loop
         let lastTime = 0;
 
