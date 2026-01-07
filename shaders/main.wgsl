@@ -114,22 +114,11 @@ fn fragmentMain(input: VertexOutput) -> @location(0) vec4f {
     // Combine lighting
     var result = (ambient + diffuse + specular) * baseColor.rgb;
     
-    // Apply distance fog
+    // Apply distance fog - less intense
     if (camera.fogDensity > 0.001) {
         let distance = length(input.worldPosition - camera.cameraPosition);
-        let fogFactor = exp(-camera.fogDensity * distance);
+        let fogFactor = exp(-camera.fogDensity * distance * 0.5);  // 0.5 za manj intenzivno meglo
         result = mix(camera.fogColor, result, fogFactor);
-    }
-    
-    // Apply ground fog at boundaries (only near ground)
-    if (camera.fogDensity > 0.001) {
-        let boundaryDist = max(abs(input.worldPosition.x) - 5.0, abs(input.worldPosition.z) - 5.0);
-        if (boundaryDist > 0.0) {
-            let groundFogColor = vec3f(0.9, 0.95, 1.0);  // Svetlo modro-bela megla
-            let groundFogFactor = clamp(boundaryDist / 30.0, 0.0, 1.0);
-            let heightFactor = clamp((60.0 - input.worldPosition.y) / 60.0, 0.0, 2.0);
-            result = mix(result, groundFogColor, groundFogFactor * heightFactor * 1.0);
-        }
     }
     
     return vec4f(result, baseColor.a);

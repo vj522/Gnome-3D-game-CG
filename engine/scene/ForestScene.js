@@ -3,6 +3,8 @@ import { Scene } from "./Scene.js";
 import { GLTFLoader } from "../loaders/GLTFLoader.js";
 import { Transform } from "../core/Transform.js";
 import { CaveScene } from "./CaveScene.js";
+import { Mesh, Primitive, Material, Model, Vertex, Texture, Sampler } from "../core/core.js";
+import { ImageLoader } from "../loaders/ImageLoader.js";
 
 
 
@@ -11,6 +13,7 @@ export class ForestScene extends Scene {
     constructor(game) {
         super(game);
         this.loader = new GLTFLoader();
+        this.imageLoader = new ImageLoader();
         this.sceneTrigger = {
             bounds: {   min: [2, 10, -20],  
                         max: [4, 50, -17], },
@@ -22,7 +25,7 @@ export class ForestScene extends Scene {
 
         // Forest fog settings
         this.fog = {
-            color: [1.0, 1.0, 1.0],  // Bolj bela megla (prej: 0.8, 0.8, 0.9)
+            color: [0.45, 0.6, 0.45],  // Temno zelena megla
             density: 0.03
         };
     }
@@ -56,58 +59,192 @@ export class ForestScene extends Scene {
 
         this.addEntitiesFloor(gltfDataFloor.entities);
 
-                // Oblaki iz seznama pozicij
-                const cloudData = await this.loader.load('objekti/cloud1/cloud1.gltf');
-                this.changeToVec(cloudData.entities);
-                this.addTransform(cloudData.entities);
+        // Naloži teksturo za meglene stene
+        loadingDiv.textContent = 'Loading fog wall texture...';
+        const fogWallImage = await this.imageLoader.load('objekti/fog_wall.jpg');
+        console.log('Fog wall texture loaded');
 
-                // Osnovna matrika brez translacije, da pozicije res določimo sami
-                const baseMatrix = mat4.clone(cloudData.entities[0].modelMatrix);
-                baseMatrix[12] = 0; // x translation
-                baseMatrix[13] = 0; // y translation
-                baseMatrix[14] = 0; // z translation
-
-                const positions = [
-                    [14, 25, 22],
-                    [6, 25, 32],
-                    [-4, 25, 30],
-                    [30, 22, 30],
-                    [0, 22, 35],
-                    [0, 22, -35],
-                    [-35, 22, 0],
-                    [35, 22, 0],
-                ];
-                // Rotacije za vsak oblak (radiani, okoli Y); po potrebi prilagodi
-                const rotationsY = [
-                    0,
-                    Math.PI * 0.55,
-                    Math.PI * 0.28,
-                    Math.PI * 0.28,
-                    Math.PI * 0.75,
-                    Math.PI * 0.95,
-                    Math.PI * 1.15,
-                    Math.PI * 1.35,
-                ];
-                const scale = 4;
-
-                const clouds = positions.map((pos, i) => {
-                    const m = mat4.create();
-                    mat4.translate(m, m, pos);
-                    const ry = rotationsY[i % rotationsY.length] || 0;
-                    mat4.rotateY(m, m, ry);
-                    mat4.scale(m, m, [scale, scale, scale]);
-                    mat4.multiply(m, m, baseMatrix);
-
-                    return {
-                        ...cloudData.entities[0],
-                        modelMatrix: m,
-                        transform: new Transform({ matrix: m }),
-                    };
-                });
-
-                this.addEntities(clouds);
+        // Dodaj meglene stene okoli scene
+        this.createFogWalls(fogWallImage);
 
     }
 
+    createFogWalls(fogWallImage) {
+        const wallHeight = 60;
+        const wallSize = 80;
+        const wallDistance = 22;  // Bližje modelu
+        
+        // Ustvari teksturo iz slike
+        const fogTexture = new Texture({
+            image: fogWallImage,
+            sampler: new Sampler({
+                minFilter: 'linear',
+                magFilter: 'linear',
+                addressModeU: 'repeat',
+                addressModeV: 'repeat',
+            }),
+        });
+        
+        // Ustvarimo material s teksturo za stene
+        const fogMaterial = new Material({
+            baseTexture: fogTexture,
+            baseFactor: [1.0, 1.0, 1.0, 1.0],
+        });
+        
+        // Ustvarimo темно modro material samo za pokrov
+        const roofMaterial = new Material({
+            baseFactor: [0.1, 0.2, 0.4, 1.0],  // Temno modra
+        });
+
+        // Funkcija za ustvarjanje vertikalne ravnine
+        const createWallMesh = () => {
+            // Dodam dodatne vertexa na robovih za zaobljene kot
+            const positions = new Float32Array([
+                -wallSize/2, -10, 0,           // spodaj levo
+                wallSize/2, -10, 0,            // spodaj desno
+                wallSize/2, wallHeight, 0,     // zgoraj desno
+                -wallSize/2, wallHeight, 0,    // zgoraj levo
+            ]);
+            
+            const texCoords = new Float32Array([
+                0, 1,
+                1, 1,
+                1, 0,
+                0, 0,
+            ]);
+            
+            // Normals za zaobljene robove - zgoraj so nakazani proti pokrovu
+            const normals = new Float32Array([
+                -0.7, 0, 0.7,     // spodaj levo - zaobljeno
+                0.7, 0, 0.7,      // spodaj desno - zaobljeno
+                0.7, -0.3, -0.7,  // zgoraj desno - zaobljeno proti pokrovu
+                -0.7, -0.3, -0.7, // zgoraj levo - zaobljeno proti pokrovu
+            ]);
+            
+            const indices = new Uint32Array([
+                0, 1, 2,
+                0, 2, 3
+            ]);
+            
+            return {
+                positions: positions,
+                texCoords: texCoords,
+                normals: normals,
+                indices: indices,
+            };
+        };
+
+        const fogWalls = [];
+        
+        // Severna stena (Z-)
+        const northMatrix = mat4.create();
+        mat4.translate(northMatrix, northMatrix, [0, 0, -wallDistance]);
+        
+        fogWalls.push({
+            primitives: [new Primitive({
+                mesh: createWallMesh(),
+                material: fogMaterial,
+            })],
+            modelMatrix: northMatrix,
+        });
+
+        // Južna stena (Z+)
+        const southMatrix = mat4.create();
+        mat4.translate(southMatrix, southMatrix, [0, 0, wallDistance]);
+        mat4.rotateY(southMatrix, southMatrix, Math.PI);
+        
+        fogWalls.push({
+            primitives: [new Primitive({
+                mesh: createWallMesh(),
+                material: fogMaterial,
+            })],
+            modelMatrix: southMatrix,
+        });
+
+        // Vzhodna stena (X+)
+        const eastMatrix = mat4.create();
+        mat4.translate(eastMatrix, eastMatrix, [wallDistance, 0, 0]);
+        mat4.rotateY(eastMatrix, eastMatrix, -Math.PI / 2);
+        
+        fogWalls.push({
+            primitives: [new Primitive({
+                mesh: createWallMesh(),
+                material: fogMaterial,
+            })],
+            modelMatrix: eastMatrix,
+        });
+
+        // Zahodna stena (X-)
+        const westMatrix = mat4.create();
+        mat4.translate(westMatrix, westMatrix, [-wallDistance, 0, 0]);
+        mat4.rotateY(westMatrix, westMatrix, Math.PI / 2);
+        
+        fogWalls.push({
+            primitives: [new Primitive({
+                mesh: createWallMesh(),
+                material: fogMaterial,
+            })],
+            modelMatrix: westMatrix,
+        });
+
+        // Pokrov nad gozdom (stena na vrhu)
+        const roofSize = wallSize;
+        const roofY = wallHeight - 2;  // Malo nižje da se prekriva s stenami
+        
+        const createRoofMesh = () => {
+            // Pokrov je malo večji da se lepše prekriva s stenami
+            const roofPadding = wallSize * 0.15;
+            const roofFullSize = roofSize + roofPadding;
+            
+            const positions = new Float32Array([
+                -roofFullSize/2, 0, -roofFullSize/2,
+                roofFullSize/2, 0, -roofFullSize/2,
+                roofFullSize/2, 0, roofFullSize/2,
+                -roofFullSize/2, 0, roofFullSize/2,
+            ]);
+            
+            const texCoords = new Float32Array([
+                0, 0,
+                1, 0,
+                1, 1,
+                0, 1,
+            ]);
+            
+            const normals = new Float32Array([
+                0, -1, 0,
+                0, -1, 0,
+                0, -1, 0,
+                0, -1, 0,
+            ]);
+            
+            const indices = new Uint32Array([
+                0, 1, 2,
+                0, 2, 3
+            ]);
+            
+            return {
+                positions: positions,
+                texCoords: texCoords,
+                normals: normals,
+                indices: indices,
+            };
+        };
+        
+        const roofMatrix = mat4.create();
+        mat4.translate(roofMatrix, roofMatrix, [0, roofY, 0]);
+        
+        fogWalls.push({
+            primitives: [new Primitive({
+                mesh: createRoofMesh(),
+                material: roofMaterial,  // Темно modri material
+            })],
+            modelMatrix: roofMatrix,
+        });
+
+        // Pretvori positions v vertices in dodaj transform
+        this.changeToVec(fogWalls);
+        this.addTransform(fogWalls);
+        this.addEntities(fogWalls);
+    }
 
 }
