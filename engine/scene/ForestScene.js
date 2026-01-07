@@ -10,7 +10,7 @@ export class ForestScene extends Scene {
         this.name = "Forest";
         this.sceneTrigger = {
             bounds: {   min: [2, 10, -20],  
-                        max: [4, 50, -15], },
+                        max: [4.5, 50, -17], },
             targetScene: null,
             targetPosition: [-21,12.2,-67],
             targetYaw: 3.14,
@@ -45,7 +45,7 @@ export class ForestScene extends Scene {
         this.computeAABBs();
 
         // Load floor collision GLTF (single object with exact collision)
-        const gltfDataFloor = await this.loader.load('objekti/ForestScene/floor/floor.gltf');
+        const gltfDataFloor = await this.loader.load('objekti/ForestScene/forest_fall/floor.gltf');
         console.log('Floor GLTF loaded (floor)');
 
         this.addEntitiesFloor(gltfDataFloor.entities);
