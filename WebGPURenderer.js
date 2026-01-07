@@ -621,12 +621,9 @@ export class WebGPURenderer {
         cameraData.set(camera.viewMatrix, 0);
         cameraData.set(camera.projectionMatrix, 16);
         cameraData.set(camera.position, 32);
-        // Fog parameters from scene
-        if (!scene.fog) {
-            scene.fog = { color: [0.8, 0.8, 0.9], density: 0.05 };
-        }
-        cameraData.set(scene.fog.color, 36);
-        cameraData[40] = scene.fog.density;
+        // Fog disabled (set to 0)
+        cameraData.set([0, 0, 0], 36); // fogColor
+        cameraData[40] = 0; // fogDensity
         this.device.queue.writeBuffer(this.cameraUniformBuffer, 0, cameraData);
         
         // Update light uniforms
@@ -864,6 +861,16 @@ export class WebGPURenderer {
     }
     
     // Async method to pre-load textures
+    clearCaches() {
+        console.log('Clearing renderer caches...');
+        // Don't destroy GPU resources, just clear the cache references
+        // This allows GPU to garbage collect unused resources naturally
+        this.bufferCache.clear();
+        this.bindGroupCache.clear();
+        // Keep textures cached as they're expensive to reload
+        console.log('Caches cleared');
+    }
+    
     async preloadTextures(scene) {
         console.log('Starting texture preload...');
         const promises = [];

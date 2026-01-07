@@ -390,8 +390,10 @@ export class Game {
 
         //new scene je sceneTriggers z bounds, target scene, position, zay, triggered?
 
-
         const sceneInstance = newScene.targetScene;
+
+        // Clear renderer caches before loading new scene
+        this.renderer.clearCaches();
 
         await sceneInstance.load();                // Load GLTF, setup entities
         await this.renderer.preloadTextures(sceneInstance); // Upload textures to GPU

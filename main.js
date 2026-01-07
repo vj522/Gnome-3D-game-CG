@@ -10,27 +10,42 @@ import {
 } from './engine/core/MeshUtils.js';
 
 
+// Global instances to reuse on restart
+let globalRenderer = null;
+let globalDevice = null;
+let globalContext = null;
+let globalShaderModules = null;
+
 export async function main(canvas) {
 
     // const canvas = document.getElementById('glCanvas');
     const loadingDiv = document.getElementById('loading');
     
-    // Initialize WebGPU
+    // Initialize WebGPU only once
     if (!navigator.gpu) {
         alert('WebGPU is not supported in your browser! Please use Chrome 113+ or Edge 113+');
         return;
     }
     
-    const adapter = await navigator.gpu.requestAdapter();
-    if (!adapter) {
-        alert('Failed to get WebGPU adapter!');
-        return;
+    let device, context;
+    
+    if (!globalDevice || !globalContext) {
+        const adapter = await navigator.gpu.requestAdapter();
+        if (!adapter) {
+            alert('Failed to get WebGPU adapter!');
+            return;
+        }
+        
+        device = await adapter.requestDevice();
+        context = canvas.getContext('webgpu');
+        globalDevice = device;
+        globalContext = context;
+        console.log('WebGPU initialized successfully');
+    } else {
+        device = globalDevice;
+        context = globalContext;
+        console.log('Reusing existing WebGPU device and context');
     }
-    
-    const device = await adapter.requestDevice();
-    const context = canvas.getContext('webgpu');
-    
-    console.log('WebGPU initialized successfully');
     
     let game = null;
     
@@ -150,27 +165,36 @@ export async function main(canvas) {
     }
     
     try {
-        // Load and create shader modules
-        console.log('Loading shaders...');
-        const mainShaderSource = await loadShaderSource('shaders/main.wgsl');
-        const postProcessShaderSource = await loadShaderSource('shaders/postprocess.wgsl');
+        let renderer;
         
-        const mainShaderModule = device.createShaderModule({
-            code: mainShaderSource
-        });
-        
-        const postProcessShaderModule = device.createShaderModule({
-            code: postProcessShaderSource
-        });
-        
-        console.log('Shaders loaded successfully');
+        // Reuse renderer if it exists, otherwise create new one
+        if (globalRenderer) {
+            renderer = globalRenderer;
+            renderer.clearCaches(); // Clear caches but keep GPU resources
+            console.log('Reusing existing renderer');
+        } else {
+            // Load and create shader modules
+            console.log('Loading shaders...');
+            const mainShaderSource = await loadShaderSource('shaders/main.wgsl');
+            const postProcessShaderSource = await loadShaderSource('shaders/postprocess.wgsl');
+            
+            const mainShaderModule = device.createShaderModule({
+                code: mainShaderSource
+            });
+            
+            const postProcessShaderModule = device.createShaderModule({
+                code: postProcessShaderSource
+            });
+            
+            console.log('Shaders loaded successfully');
+            
+            // Create renderer
+            renderer = new WebGPURenderer(device, context, canvas, mainShaderModule, postProcessShaderModule);
+            globalRenderer = renderer;
+            console.log('Renderer created');
+        }
         
         loadingDiv.textContent = 'Loading game';
-
-
-        // Create renderer
-        const renderer = new WebGPURenderer(device, context, canvas, mainShaderModule, postProcessShaderModule);
-        console.log('Renderer created');
         
         // Create game
         game = new Game(canvas, renderer);

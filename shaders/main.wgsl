@@ -18,6 +18,12 @@ struct CameraUniforms {
     projectionMatrix: mat4x4f,
     cameraPosition: vec3f,
     padding1: f32, // Alignment padding
+    fogColor: vec3f,
+    padding2: f32,
+    fogDensity: f32,
+    padding3: f32,
+    padding4: f32,
+    padding5: f32,
 }
 
 struct ModelUniforms {
