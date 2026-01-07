@@ -209,9 +209,9 @@ export class WebGPURenderer {
     }
     
     createUniformBuffers() {
-        // Camera uniform buffer (mat4 + mat4 + vec3 + padding = 144 bytes)
+        // Camera uniform buffer (mat4 + mat4 + vec3 + padding + vec3 + padding + f32 + padding = 176 bytes)
         this.cameraUniformBuffer = this.device.createBuffer({
-            size: 144,
+            size: 176,
             usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
         });
         
@@ -504,18 +504,27 @@ export class WebGPURenderer {
         return texture;
     }
     
-    createModelBindGroup(modelMatrix) {
-        // Create model uniform buffer (mat4 + mat4 = 128 bytes)
-        const modelUniformBuffer = this.device.createBuffer({
-            size: 128,
-            usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
-        });
-        
-        // Calculate normal matrix
+    createModelBindGroup(entity, modelMatrix) {
+        // Reuse a per-entity uniform buffer and bind group to avoid allocating each frame
+        if (!entity._modelUniformBuffer) {
+            entity._modelUniformBuffer = this.device.createBuffer({
+                size: 128,
+                usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
+            });
+
+            entity._modelBindGroup = this.device.createBindGroup({
+                layout: this.modelBindGroupLayout,
+                entries: [{
+                    binding: 0,
+                    resource: { buffer: entity._modelUniformBuffer }
+                }]
+            });
+        }
+
+        // Calculate normal matrix and pack into 4x4 for alignment
         const normalMatrix = mat3.create();
         mat3.normalFromMat4(normalMatrix, modelMatrix);
-        
-        // Convert 3x3 to 4x4 for alignment
+
         const normalMatrix4x4 = mat4.create();
         normalMatrix4x4[0] = normalMatrix[0];
         normalMatrix4x4[1] = normalMatrix[1];
@@ -526,21 +535,15 @@ export class WebGPURenderer {
         normalMatrix4x4[8] = normalMatrix[6];
         normalMatrix4x4[9] = normalMatrix[7];
         normalMatrix4x4[10] = normalMatrix[8];
-        
-        // Pack data
+
         const modelData = new Float32Array(32); // 128 bytes / 4
         modelData.set(modelMatrix, 0);
         modelData.set(normalMatrix4x4, 16);
-        
-        this.device.queue.writeBuffer(modelUniformBuffer, 0, modelData);
-        
-        return this.device.createBindGroup({
-            layout: this.modelBindGroupLayout,
-            entries: [{
-                binding: 0,
-                resource: { buffer: modelUniformBuffer }
-            }]
-        });
+
+        // Update the existing buffer instead of creating a new one
+        this.device.queue.writeBuffer(entity._modelUniformBuffer, 0, modelData);
+
+        return entity._modelBindGroup;
     }
     
     async createMaterialBindGroup(material) {
@@ -614,10 +617,16 @@ export class WebGPURenderer {
     
     render(scene, camera, blurEnabled = false) {
         // Update camera uniforms
-        const cameraData = new Float32Array(36); // 144 bytes / 4
+        const cameraData = new Float32Array(44); // 176 bytes / 4
         cameraData.set(camera.viewMatrix, 0);
         cameraData.set(camera.projectionMatrix, 16);
         cameraData.set(camera.position, 32);
+        // Fog parameters from scene
+        if (!scene.fog) {
+            scene.fog = { color: [0.8, 0.8, 0.9], density: 0.05 };
+        }
+        cameraData.set(scene.fog.color, 36);
+        cameraData[40] = scene.fog.density;
         this.device.queue.writeBuffer(this.cameraUniformBuffer, 0, cameraData);
         
         // Update light uniforms
@@ -683,10 +692,10 @@ export class WebGPURenderer {
     
     renderEntitySync(passEncoder, entity) {
         const modelMatrix = entity.modelMatrix || mat4.create();
-        const modelBindGroup = this.createModelBindGroup(modelMatrix);
-        
+        const modelBindGroup = this.createModelBindGroup(entity, modelMatrix);
+
         passEncoder.setBindGroup(1, modelBindGroup);
-        
+
         if (entity.primitives) {
             for (const primitive of entity.primitives) {
                 this.renderPrimitiveSync(passEncoder, primitive);
