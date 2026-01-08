@@ -18,6 +18,12 @@ struct CameraUniforms {
     projectionMatrix: mat4x4f,
     cameraPosition: vec3f,
     padding1: f32, // Alignment padding
+    fogColor: vec3f,
+    padding2: f32,
+    fogDensity: f32,
+    padding3: f32,
+    padding4: f32,
+    padding5: f32,
 }
 
 struct ModelUniforms {
@@ -108,7 +114,12 @@ fn fragmentMain(input: VertexOutput) -> @location(0) vec4f {
     // Combine lighting
     var result = (ambient + diffuse + specular) * baseColor.rgb;
     
-    // No fog
+    // Apply distance fog - less intense
+    if (camera.fogDensity > 0.001) {
+        let distance = length(input.worldPosition - camera.cameraPosition);
+        let fogFactor = exp(-camera.fogDensity * distance * 0.5);  // 0.5 za manj intenzivno meglo
+        result = mix(camera.fogColor, result, fogFactor);
+    }
     
     return vec4f(result, baseColor.a);
 }
