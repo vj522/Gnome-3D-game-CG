@@ -30,7 +30,6 @@ export async function main(canvas) {
     const device = await adapter.requestDevice();
     const context = canvas.getContext('webgpu');
     
-    console.log('WebGPU initialized successfully');
     
     let game = null;
     
@@ -151,7 +150,6 @@ export async function main(canvas) {
     
     try {
         // Load and create shader modules
-        console.log('Loading shaders...');
         const mainShaderSource = await loadShaderSource('shaders/main.wgsl');
         const postProcessShaderSource = await loadShaderSource('shaders/postprocess.wgsl');
         
@@ -163,14 +161,12 @@ export async function main(canvas) {
             code: postProcessShaderSource
         });
         
-        console.log('Shaders loaded successfully');
         
         loadingDiv.textContent = 'Loading game';
 
 
         // Create renderer
         const renderer = new WebGPURenderer(device, context, canvas, mainShaderModule, postProcessShaderModule);
-        console.log('Renderer created');
         
         // Create game
         game = new Game(canvas, renderer);
@@ -223,7 +219,6 @@ export async function main(canvas) {
         // Preload textures
         // loadingDiv.textContent = 'Loading textures...';
         await renderer.preloadTextures(game.scene);
-        console.log('Textures preloaded');
         
         // Hide loading screen
         loadingDiv.style.display = 'none';
@@ -305,8 +300,7 @@ export async function main(canvas) {
         // Start render loop
         requestAnimationFrame(render);
         
-        console.log('Game started successfully! You should see the forest.');
-        console.log('Click on the canvas to lock pointer and use WASD to move, mouse to look around.');
+        // Game initialized
         
     } catch (error) {
         console.error('Error initializing game:', error);

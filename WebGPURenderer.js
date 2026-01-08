@@ -209,15 +209,16 @@ export class WebGPURenderer {
     }
     
     createUniformBuffers() {
-        // Camera uniform buffer (mat4 + mat4 + vec3 + padding = 144 bytes)
+        // Camera uniform buffer (mat4 + mat4 + vec3 + padding). Some GPUs round up
+        // the required binding size; use 176 bytes to satisfy pipeline requirements.
         this.cameraUniformBuffer = this.device.createBuffer({
-            size: 144,
+            size: 176,
             usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
         });
         
-        // Light uniform buffer (vec3 + padding + vec3 + padding = 32 bytes)
+        // Light uniform buffer (vec3 + f32 + vec3 + f32 + vec3 + f32 = 64 bytes)
         this.lightUniformBuffer = this.device.createBuffer({
-            size: 32,
+            size: 64,
             usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
         });
         
@@ -498,7 +499,7 @@ export class WebGPURenderer {
             // console.log('Creating texture:', textureData.image.src);
             texture = await this.createTexture(textureData.image);
             this.textureCache.set(textureData, texture);
-            console.log('Texture created successfully');
+            // Texture created successfully
         }
         
         return texture;
@@ -612,18 +613,36 @@ export class WebGPURenderer {
         return bindGroup;
     }
     
-    render(scene, camera, blurEnabled = false) {
+    render(scene, camera, blurEnabled = false, torchLightEnabled = false) {
         // Update camera uniforms
-        const cameraData = new Float32Array(36); // 144 bytes / 4
+        const cameraData = new Float32Array(44); // 176 bytes / 4
         cameraData.set(camera.viewMatrix, 0);
         cameraData.set(camera.projectionMatrix, 16);
         cameraData.set(camera.position, 32);
         this.device.queue.writeBuffer(this.cameraUniformBuffer, 0, cameraData);
         
-        // Update light uniforms
-        const lightData = new Float32Array(8); // 32 bytes / 4
-        lightData.set([0.3, -1.0, 0.5], 0); // direction
-        lightData.set([1.0, 1.0, 0.95], 4); // color
+        // Update light uniforms (include torch point light if available)
+        const lightData = new Float32Array(16); // 64 bytes / 4
+        lightData.set([0.3, -1.0, 0.5], 0);     // direction (offset 0)
+        lightData.set([1.0, 1.0, 0.95], 4);     // color (offset 16 bytes)
+        
+        // Point light from torch (if scene has it AND shift is pressed)
+        if (torchLightEnabled && scene.torch && scene.torch.modelMatrix) {
+            const torchPos = [
+                scene.torch.modelMatrix[12],
+                scene.torch.modelMatrix[13],
+                scene.torch.modelMatrix[14]
+            ];
+            lightData.set(torchPos, 8);         // pointLightPos (offset 32 bytes)
+            lightData[11] = 15.0;               // pointLightRadius - manjši radij
+            lightData.set([3.5, 2.0, 0.6], 12); // pointLightColor - še bolj intenzivna
+        } else {
+            // No torch: set far away position and small radius
+            lightData.set([0, -1000, 0], 8);
+            lightData[11] = 0.01;
+            lightData.set([0, 0, 0], 12);
+        }
+        
         this.device.queue.writeBuffer(this.lightUniformBuffer, 0, lightData);
         
         // Update post-process uniforms
@@ -856,7 +875,6 @@ export class WebGPURenderer {
     
     // Async method to pre-load textures
     async preloadTextures(scene) {
-        console.log('Starting texture preload...');
         const promises = [];
         
         for (const entity of scene.entities) {
@@ -871,10 +889,8 @@ export class WebGPURenderer {
         }
         
         await Promise.all(promises);
-        console.log(`Preloaded ${promises.length} textures`);
         
         // Now create all material bind groups
-        console.log('Creating material bind groups...');
         for (const entity of scene.entities) {
             if (entity.primitives) {
                 for (const primitive of entity.primitives) {
@@ -884,7 +900,6 @@ export class WebGPURenderer {
                 }
             }
         }
-        console.log('All material bind groups created');
     }
     
     createPrimitiveMaterialBindGroup(primitive) {
