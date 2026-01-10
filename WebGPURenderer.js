@@ -617,7 +617,7 @@ export class WebGPURenderer {
         return bindGroup;
     }
     
-    render(scene, camera, blurEnabled = false, bloomEnabled = false, pickupLightIntensity = 0.0, pickupLightPos = [0, 0, 0]) {
+    render(scene, camera, blurEnabled = false, bloomEnabled = false, pickupLightIntensity = 0.0, pickupLightPos = [0, 0, 0], torchLightEnabled = false) {
         // Update camera uniforms
         const cameraData = new Float32Array(44); // 176 bytes / 4
         cameraData.set(camera.viewMatrix, 0);
