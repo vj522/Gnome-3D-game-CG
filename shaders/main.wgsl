@@ -44,9 +44,9 @@ struct LightUniforms {
     padding1: f32,
     color: vec3f,
     padding2: f32,
-    pointLightPos: vec3f,    // Torch position
-    pointLightRadius: f32,   // Light falloff radius
-    pointLightColor: vec3f,  // Torch light color
+    pickupLightPos: vec3f,
+    pickupIntensity: f32,
+    pickupColor: vec3f,
     padding3: f32,
 }
 
@@ -115,31 +115,47 @@ fn fragmentMain(input: VertexOutput) -> @location(0) vec4f {
     let spec = pow(max(dot(viewDir, reflectDir), 0.0), 32.0);
     let specular = 0.5 * spec * light.color;
     
-    // Combine ambient + directional lighting
+    // Combine standard lighting
     var result = (ambient + diffuse + specular) * baseColor.rgb;
     
-    // Add point light from torch
-    let toPointLight = light.pointLightPos - input.worldPosition;
-    let distToPointLight = length(toPointLight);
-    
-    // Only apply if within radius
-    if (distToPointLight < light.pointLightRadius) {
-        let pointLightDir = normalize(toPointLight);
-        let pointDiff = max(dot(normal, pointLightDir), 0.0);
+    // ===== PICKUP POINT LIGHT (ADDITIONAL) =====
+    if (light.pickupIntensity > 0.01) {
+        let lightToPixel = light.pickupLightPos - input.worldPosition;
+        let distance = length(lightToPixel);
+        let pickupDir = normalize(lightToPixel);
         
-        // Attenuation: linearno slabljenje namesto kvadratnega
-        var attenuation = 1.0 - (distToPointLight / light.pointLightRadius);
+        // Attenuation based on distance
+        let attenuation = 1.0 / (1.0 + distance * distance * 0.5);
         
-        // Diffuse light od torcha
-        let pointDiffuse = pointDiff * light.pointLightColor * attenuation;
-        result += pointDiffuse * baseColor.rgb;
+        // Screen space falloff - stronger in center, weaker at edges (vignette effect)
+        let screenPos = input.clipPosition.xy / vec2f(1280.0, 720.0); // Normalized screen coordinates
+        let screenCenter = vec2f(0.5, 0.5);
+        let screenDist = length(screenPos - screenCenter);
+        // Wider reach (0.0 -> 1.05) and stronger center boost
+        let screenFalloff = (1.0 - smoothstep(0.0, 1.05, screenDist)) * 3.0;
         
-        // Tudi ambient svetloba od torcha (vidna tudi na stenah ki niso obrnjene k torchu)
-        let pointAmbient = 0.3 * light.pointLightColor * attenuation;
-        result += pointAmbient * baseColor.rgb;
+        // Diffuse from pickup light
+        let pickupDiff = max(dot(normal, pickupDir), 0.0);
+        let pickupDiffuse = pickupDiff * light.pickupColor * attenuation * light.pickupIntensity * screenFalloff;
+        
+        // Specular from pickup light
+        let pickupReflect = reflect(-pickupDir, normal);
+        let pickupSpec = pow(max(dot(viewDir, pickupReflect), 0.0), 32.0);
+        let pickupSpecular = 0.3 * pickupSpec * light.pickupColor * attenuation * light.pickupIntensity * screenFalloff;
+        
+        // Add pickup lighting to result
+        result = result + (pickupDiffuse + pickupSpecular) * baseColor.rgb;
     }
     
-    // No fog
+    // Add emission as pure additive (creates glow effect without washing out)
+    result = result + material.emissionFactor;
+    
+    // Apply distance fog - less intense
+    if (camera.fogDensity > 0.001) {
+        let distance_fog = length(input.worldPosition - camera.cameraPosition);
+        let fogFactor = exp(-camera.fogDensity * distance_fog * 0.5);  // 0.5 za manj intenzivno meglo
+        result = mix(camera.fogColor, result, fogFactor);
+    }
     
     return vec4f(result, baseColor.a);
 }

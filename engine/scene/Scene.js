@@ -23,8 +23,6 @@ export class Scene {
         this.physics = new Physics(game, this.collisions);
         this.floorPhysics = new FloorPhysics();
 
-        // Torch light (če je v sceni)
-        this.torch = null;
         // Default fog settings
         this.fog = {
             color: [0.7, 0.8, 0.9],
@@ -83,18 +81,14 @@ export class Scene {
         // Register floor collision mesh for exact collisions
         this.floorPhysics.setFloorCollision(this.floor.entities);
     }
-
-    // Hook za update animacij vezanih na kamero (npr. bakla v jami)
-    updateHeldItems(playerTransform, playerVelocity) {
-        // Default: ni-op, scene-specifični override pa prepiše to
-    }
+       
 
     clear() {
-        // Počisti entities, collisions in floor entitete
-        // Uporabljamo splice namesto preusmerjanja, da ostane reference pravilna
-        this.scene.entities.splice(0);
-        this.collisions.entities.splice(0);
-        this.floor.entities.splice(0);
+        // Clear all entity arrays but keep structure for each scene type
+        this.scene.entities.length = 0;
+        this.collisions.entities.length = 0;
+        this.floor.entities.length = 0;
+        this.entities = this.scene.entities; // Ensure entities points to cleared array
     }
 
     /* ==============================
