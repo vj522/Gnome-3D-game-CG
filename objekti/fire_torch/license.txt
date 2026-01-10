@@ -1,8 +1,0 @@
-Model Information:
-* title:	fire torch
-* source:	https://sketchfab.com/3d-models/fire-torch-7eae54ff03374ef396dff3a9d0fb4849
-* author:	wuscott0317 (https://sketchfab.com/wuscott0317)
-
-Model License:
-* license type:	SKETCHFAB Standard (https://sketchfab.com/licenses)
-* requirements:	Under basic restrictions, use worldwide, on all types of media, commercially or not, and in all types of derivative works
