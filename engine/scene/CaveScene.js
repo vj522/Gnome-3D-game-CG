@@ -1,5 +1,9 @@
 import { Scene } from "./Scene.js";
 import { GLTFLoader } from "../loaders/GLTFLoader.js"
+import { Transform } from "../core/Transform.js";
+import { ForestScene } from "./ForestScene.js";
+import { sineEaseInOut } from "../animators/EasingFunctions.js";
+import { mat4, vec3 } from "../../lib/glm.js";
 
 
 export class CaveScene extends Scene {
@@ -8,6 +12,14 @@ export class CaveScene extends Scene {
         super(game);
         this.loader = new GLTFLoader();
         this.name = "Cave";
+        this.torch = null;
+        this.torchBaseMatrix = mat4.create();
+        this.torchOffset = [0.55, -0.30, -0.7];
+        this.torchScale = 0.3;
+        this.torchBobTime = 0;
+        this.torchBobSpeed = 0.5; // Hz za bob animacija
+        this.torchBobAmount = 0.08; // koliko se premakne gor-dol
+        this.torchAnimStrength = 1.0; // fade-out faktor
         this.sceneTrigger = {
             bounds: {   min: [-23, 0, -70],  
                         max: [-17, 50, -64], },
@@ -20,7 +32,7 @@ export class CaveScene extends Scene {
             jumpVelocity: 30.0, // Initial jump velocity (increased for higher jumps)
         };
 
-        // Cave fog settings - less fog
+        // Cave fog settings
         this.fog = {
             color: [0.1, 0.1, 0.1], // Dark fog for cave
             density: 0.000
@@ -32,6 +44,12 @@ export class CaveScene extends Scene {
     async load() {
 
         const loadingDiv = document.getElementById('loading');
+        console.log('CaveScene.load() starting...');
+
+        // Počisti stare entitete
+        this.clear();
+        this.torch = null;
+        this.torchBobTime = 0;
 
         // Load GLTF model
         loadingDiv.textContent = 'Loading cave model...';
@@ -64,6 +82,73 @@ export class CaveScene extends Scene {
 
         this.addEntitiesFloor(gltfDataFloor.entities);
 
+        // Load fire torch GLTF
+        loadingDiv.textContent = 'Loading torch...';
+        const torchData = await this.loader.load('objekti/fire_torch/scene.gltf');
+        console.log('Torch GLTF loaded');
+        
+        if (torchData.entities?.length) {
+            this.torch = torchData.entities[0];
+            this.torchBaseMatrix = mat4.clone(this.torch.modelMatrix ?? mat4.create());
+            
+            // Postavi transform in dodaj v sceno
+            this.changeToVec([this.torch]);
+            this.addTransform([this.torch]);
+            this.addEntities([this.torch]);
+            console.log('Fire torch loaded and added to cave scene');
+        } else {
+            console.warn('No torch entity found in GLTF');
+        }
+
+    }
+
+    updateHeldItems(playerTransform, playerVelocity){
+        if (!this.torch) return;
+
+        // Preveri ali se premikamo (threshold 0.15 - malo višja za hitrejši stop)
+        const speed = vec3.length(playerVelocity || [0, 0, 0]);
+        const isMoving = speed > 0.15;
+
+        let xOffset = 0;
+        let yOffset = 0;
+
+        if (isMoving) {
+            // Samo animiraj bob kadar se premikamo
+            this.torchBobTime += 1/60; // predpostavi 60 fps
+
+            const bobPhase = (this.torchBobTime * this.torchBobSpeed) % 1;
+            const phase = bobPhase * Math.PI * 2; // 0 do 2*PI
+            
+            // U-oblika gibanja:
+            // X: premika se levo-desno z sine valovanjem
+            xOffset = Math.sin(phase) * 0.12;
+            
+            // -abs(cos(phase)) = dol (negativno) ko je phase 0 ali 2*PI, gor (manj negativno) ko je phase PI
+            yOffset = -Math.abs(Math.cos(phase)) * 0.12;
+        } else {
+            // Ko se ustavimo, takoj na 0 offsets
+            xOffset = 0;
+            yOffset = 0;
+            // Resetiraj animacijo samo če je že počasi
+            if (this.torchBobTime > 0) {
+                this.torchBobTime = 0;
+            }
+        }
+        
+        const bobOffset = [
+            this.torchOffset[0] + xOffset,
+            this.torchOffset[1] + yOffset,
+            this.torchOffset[2]
+        ];
+
+        // Postavi baklo v lokalni offset kamere in jo obrni skupaj z igralcem
+        const offsetMatrix = mat4.create();
+        mat4.translate(offsetMatrix, offsetMatrix, bobOffset);
+        mat4.scale(offsetMatrix, offsetMatrix, [this.torchScale, this.torchScale, this.torchScale]);
+        // Upoštevaj izvorno orientacijo/scale modela
+        const localTorch = mat4.create();
+        mat4.mul(localTorch, offsetMatrix, this.torchBaseMatrix);
+        mat4.mul(this.torch.modelMatrix, playerTransform.matrix, localTorch);
     }
 
 

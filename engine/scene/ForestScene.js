@@ -1,6 +1,7 @@
 import { mat4 } from "../../lib/glm.js";
 import { Scene } from "./Scene.js";
 import { GLTFLoader } from "../loaders/GLTFLoader.js";
+import { Transform } from "../core/Transform.js";
 import { ImageLoader } from "../loaders/ImageLoader.js";
 import { Texture } from "../core/Texture.js";
 import { Sampler } from "../core/Sampler.js";
