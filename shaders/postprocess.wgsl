@@ -85,7 +85,7 @@ fn fragmentMain(input: VertexOutput) -> @location(0) vec4f {
         
         return blurColor / sampleCount;
     }
-        // No post-processing, just pass through
-        return textureSample(screenTexture, screenSampler, input.texCoord);
-    }
+
+    // No post-processing, just pass through
+    return textureSample(screenTexture, screenSampler, input.texCoord);
 }
