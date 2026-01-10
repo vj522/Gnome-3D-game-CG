@@ -215,9 +215,9 @@ export class WebGPURenderer {
             usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
         });
         
-        // Light uniform buffer (vec3 + padding + vec3 + padding = 32 bytes)
+        // Light uniform buffer (vec3 + padding + vec3 + padding + vec3 + f32 + vec3 + padding = 64 bytes)
         this.lightUniformBuffer = this.device.createBuffer({
-            size: 32,
+            size: 64,
             usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
         });
         
@@ -557,16 +557,18 @@ export class WebGPURenderer {
         if (!bindGroup) {
             // Material uniform buffer
             const materialUniformBuffer = this.device.createBuffer({
-                size: 32, // vec4 + u32 + padding
+                size: 48, // vec4(baseColor) + vec3(emission) + u32(hasTexture) + padding
                 usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
             });
             
             const baseColorFactor = material.baseColorFactor || [1, 1, 1, 1];
+            const emissionFactor = material.emissionFactor || [0, 0, 0];
             const hasBaseTexture = material.baseTexture ? 1 : 0;
             
-            const materialData = new Float32Array(8);
-            materialData.set(baseColorFactor, 0);
-            new Uint32Array(materialData.buffer, 16, 1)[0] = hasBaseTexture;
+            const materialData = new Float32Array(12);
+            materialData.set(baseColorFactor, 0);  // offset 0
+            materialData.set(emissionFactor, 4);   // offset 4
+            new Uint32Array(materialData.buffer, 28, 1)[0] = hasBaseTexture;
             
             this.device.queue.writeBuffer(materialUniformBuffer, 0, materialData);
             
@@ -615,7 +617,7 @@ export class WebGPURenderer {
         return bindGroup;
     }
     
-    render(scene, camera, blurEnabled = false) {
+    render(scene, camera, blurEnabled = false, bloomEnabled = false, pickupLightIntensity = 0.0, pickupLightPos = [0, 0, 0]) {
         // Update camera uniforms
         const cameraData = new Float32Array(44); // 176 bytes / 4
         cameraData.set(camera.viewMatrix, 0);
@@ -630,19 +632,27 @@ export class WebGPURenderer {
         this.device.queue.writeBuffer(this.cameraUniformBuffer, 0, cameraData);
         
         // Update light uniforms
+        // Standard directional light for base illumination
         let lightDir = [0.3, -1.0, 0.5];
         let lightCol = [1.0, 1.0, 0.95];
         if (scene.name === "Cave") {
             lightCol = [0.3, 0.3, 0.3]; // Dimmer light for cave
         }
-        const lightData = new Float32Array(8); // 32 bytes / 4
-        lightData.set(lightDir, 0); // direction
-        lightData.set(lightCol, 4); // color
+        
+        const lightData = new Float32Array(16); // 64 bytes / 4
+        lightData.set(lightDir, 0);           // direction (offset 0)
+        lightData.set(lightCol, 4);           // color (offset 4)
+        // Pickup light data
+        lightData.set(pickupLightPos, 8);    // pickupLightPos (offset 8)
+        lightData[11] = pickupLightIntensity; // pickupIntensity (offset 11)
+        // Deeper blue tint for pickup glow
+        lightData.set([0.6, 0.8, 1.4], 12); // pickupColor - vivid blue (offset 12)
         this.device.queue.writeBuffer(this.lightUniformBuffer, 0, lightData);
         
         // Update post-process uniforms
         const postProcessData = new Uint32Array(4);
         postProcessData[0] = blurEnabled ? 1 : 0;
+        postProcessData[1] = bloomEnabled ? 1 : 0;
         this.device.queue.writeBuffer(this.postProcessUniformBuffer, 0, postProcessData);
         
         const commandEncoder = this.device.createCommandEncoder();
@@ -711,6 +721,20 @@ export class WebGPURenderer {
     renderPrimitiveSync(passEncoder, primitive) {
         const buffers = this.getOrCreateBuffers(primitive);
         
+        // Update material uniform buffer if emissionFactor changed
+        if (primitive._materialUniformBuffer && primitive.material) {
+            const baseColorFactor = primitive.material.baseColorFactor || [1, 1, 1, 1];
+            const emissionFactor = primitive.material.emissionFactor || [0, 0, 0];
+            const hasBaseTexture = primitive.material.baseTexture ? 1 : 0;
+            
+            const materialData = new Float32Array(12);
+            materialData.set(baseColorFactor, 0);
+            materialData.set(emissionFactor, 4);
+            new Uint32Array(materialData.buffer, 28, 1)[0] = hasBaseTexture;
+            
+            this.device.queue.writeBuffer(primitive._materialUniformBuffer, 0, materialData);
+        }
+        
         // Set vertex buffers
         if (buffers.position) {
             passEncoder.setVertexBuffer(0, buffers.position);
@@ -747,13 +771,14 @@ export class WebGPURenderer {
         
         // Material uniform buffer
         const materialUniformBuffer = this.device.createBuffer({
-            size: 32,
+            size: 48,
             usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
         });
         
-        const materialData = new Float32Array(8);
-        materialData.set([1, 1, 1, 1], 0); // white
-        new Uint32Array(materialData.buffer, 16, 1)[0] = 0; // no texture
+        const materialData = new Float32Array(12);
+        materialData.set([1, 1, 1, 1], 0); // white base color
+        materialData.set([0, 0, 0], 4);    // no emission
+        new Uint32Array(materialData.buffer, 28, 1)[0] = 0; // no texture
         
         this.device.queue.writeBuffer(materialUniformBuffer, 0, materialData);
         
@@ -805,11 +830,12 @@ export class WebGPURenderer {
         
         // Create material bind group synchronously
         const materialUniformBuffer = this.device.createBuffer({
-            size: 32,
+            size: 48,
             usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
         });
         
         const baseColorFactor = material.baseColorFactor || [1, 1, 1, 1];
+        const emissionFactor = material.emissionFactor || [0, 0, 0];
         
         // Get texture (should be cached by now)
         let texture = null;
@@ -822,9 +848,10 @@ export class WebGPURenderer {
             }
         }
         
-        const materialData = new Float32Array(8);
-        materialData.set(baseColorFactor, 0);
-        new Uint32Array(materialData.buffer, 16, 1)[0] = hasBaseTexture;
+        const materialData = new Float32Array(12);
+        materialData.set(baseColorFactor, 0);  // offset 0
+        materialData.set(emissionFactor, 4);   // offset 4
+        new Uint32Array(materialData.buffer, 28, 1)[0] = hasBaseTexture;
         
         this.device.queue.writeBuffer(materialUniformBuffer, 0, materialData);
         
@@ -906,11 +933,13 @@ export class WebGPURenderer {
         
         // Create material uniform buffer
         const materialUniformBuffer = this.device.createBuffer({
-            size: 32,
+            size: 48,
             usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
         });
         
         const baseColorFactor = material.baseColorFactor || [1, 1, 1, 1];
+        const emissionFactor = material.emissionFactor || [0, 0, 0];
+        
         let hasBaseTexture = 0;
         let texture = null;
         
@@ -922,11 +951,15 @@ export class WebGPURenderer {
             }
         }
         
-        const materialData = new Float32Array(8);
+        const materialData = new Float32Array(12);
         materialData.set(baseColorFactor, 0);
-        new Uint32Array(materialData.buffer, 16, 1)[0] = hasBaseTexture;
+        materialData.set(emissionFactor, 4);
+        new Uint32Array(materialData.buffer, 28, 1)[0] = hasBaseTexture;
         
         this.device.queue.writeBuffer(materialUniformBuffer, 0, materialData);
+        
+        // Store reference to uniform buffer on primitive for later updates
+        primitive._materialUniformBuffer = materialUniformBuffer;
         
         // Use white texture if no texture available
         if (!texture) {
