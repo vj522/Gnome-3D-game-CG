@@ -18,6 +18,12 @@ struct CameraUniforms {
     projectionMatrix: mat4x4f,
     cameraPosition: vec3f,
     padding1: f32, // Alignment padding
+    fogColor: vec3f,
+    padding2: f32,
+    fogDensity: f32,
+    padding3: f32,
+    padding4: f32,
+    padding5: f32,
 }
 
 struct ModelUniforms {
@@ -27,10 +33,10 @@ struct ModelUniforms {
 
 struct MaterialUniforms {
     baseColorFactor: vec4f,
+    emissionFactor: vec3f,
     hasBaseTexture: u32,
     padding1: u32,
     padding2: u32,
-    padding3: u32,
 }
 
 struct LightUniforms {
@@ -38,6 +44,10 @@ struct LightUniforms {
     padding1: f32,
     color: vec3f,
     padding2: f32,
+    pickupLightPos: vec3f,
+    pickupIntensity: f32,
+    pickupColor: vec3f,
+    padding3: f32,
 }
 
 @group(0) @binding(0) var<uniform> camera: CameraUniforms;
@@ -89,13 +99,13 @@ fn fragmentMain(input: VertexOutput) -> @location(0) vec4f {
     // Normalize normal
     let normal = normalize(input.normal);
     
-    // Calculate lighting
+    // ===== STANDARD DIRECTIONAL LIGHTING =====
     let lightDir = normalize(-light.direction);
     
-    // Ambient light
+    // Ambient light (base illumination)
     let ambient = 0.3 * light.color;
     
-    // Diffuse light
+    // Diffuse light from directional light
     let diff = max(dot(normal, lightDir), 0.0);
     let diffuse = diff * light.color;
     
@@ -105,10 +115,47 @@ fn fragmentMain(input: VertexOutput) -> @location(0) vec4f {
     let spec = pow(max(dot(viewDir, reflectDir), 0.0), 32.0);
     let specular = 0.5 * spec * light.color;
     
-    // Combine lighting
+    // Combine standard lighting
     var result = (ambient + diffuse + specular) * baseColor.rgb;
     
-    // No fog
+    // ===== PICKUP POINT LIGHT (ADDITIONAL) =====
+    if (light.pickupIntensity > 0.01) {
+        let lightToPixel = light.pickupLightPos - input.worldPosition;
+        let distance = length(lightToPixel);
+        let pickupDir = normalize(lightToPixel);
+        
+        // Attenuation based on distance
+        let attenuation = 1.0 / (1.0 + distance * distance * 0.5);
+        
+        // Screen space falloff - stronger in center, weaker at edges (vignette effect)
+        let screenPos = input.clipPosition.xy / vec2f(1280.0, 720.0); // Normalized screen coordinates
+        let screenCenter = vec2f(0.5, 0.5);
+        let screenDist = length(screenPos - screenCenter);
+        // Wider reach (0.0 -> 1.05) and stronger center boost
+        let screenFalloff = (1.0 - smoothstep(0.0, 1.05, screenDist)) * 3.0;
+        
+        // Diffuse from pickup light
+        let pickupDiff = max(dot(normal, pickupDir), 0.0);
+        let pickupDiffuse = pickupDiff * light.pickupColor * attenuation * light.pickupIntensity * screenFalloff;
+        
+        // Specular from pickup light
+        let pickupReflect = reflect(-pickupDir, normal);
+        let pickupSpec = pow(max(dot(viewDir, pickupReflect), 0.0), 32.0);
+        let pickupSpecular = 0.3 * pickupSpec * light.pickupColor * attenuation * light.pickupIntensity * screenFalloff;
+        
+        // Add pickup lighting to result
+        result = result + (pickupDiffuse + pickupSpecular) * baseColor.rgb;
+    }
+    
+    // Add emission as pure additive (creates glow effect without washing out)
+    result = result + material.emissionFactor;
+    
+    // Apply distance fog - less intense
+    if (camera.fogDensity > 0.001) {
+        let distance_fog = length(input.worldPosition - camera.cameraPosition);
+        let fogFactor = exp(-camera.fogDensity * distance_fog * 0.5);  // 0.5 za manj intenzivno meglo
+        result = mix(camera.fogColor, result, fogFactor);
+    }
     
     return vec4f(result, baseColor.a);
 }

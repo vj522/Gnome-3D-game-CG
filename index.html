@@ -259,6 +259,7 @@
         // ---------- TIMER ----------
         let timeLeft = 100;
         let timerInterval = null;
+        let pendingWinTimeout = null;
 
         function startTimer() {
             if (timerInterval) clearInterval(timerInterval);
@@ -299,22 +300,109 @@
             startScreen.style.display = 'none';
 
             timeLeft = 100;
-
-            // Show canvas & HUD
-            canvas.style.display = 'block';
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-
-            info.style.display = 'block';
-            sceneName.style.display = 'block';
-            correctItems.style.display = 'flex';
-            timeBox.style.display = 'block';
-
-            // Loading
+            
+            // Clear any pending win timeout
+            if (pendingWinTimeout) {
+                clearTimeout(pendingWinTimeout);
+                pendingWinTimeout = null;
+            }
+            
+            // Hide canvas and show loading during reset
+            canvas.style.display = 'none';
             loadingDiv.style.display = 'block';
+            
+            // Reset game state if game already exists
+            if (window.gameInstance) {
+                // Remove only collectable objects, not the entire scene
+                const scene = window.gameInstance.scene;
+                if (scene) {
+                    // Remove collectable entities from all scene arrays
+                    const removeCollectables = (entityArray) => {
+                        for (let i = entityArray.length - 1; i >= 0; i--) {
+                            if (entityArray[i].isCollectable) {
+                                entityArray.splice(i, 1);
+                            }
+                        }
+                    };
+                    
+                    removeCollectables(scene.scene.entities);
+                    removeCollectables(scene.collisions.entities);
+                    removeCollectables(scene.floor.entities);
+                    
+                    // Do the same for the other scene
+                    const otherScene = scene === window.gameInstance.forestScene 
+                        ? window.gameInstance.caveScene 
+                        : window.gameInstance.forestScene;
+                    if (otherScene) {
+                        removeCollectables(otherScene.scene.entities);
+                        removeCollectables(otherScene.collisions.entities);
+                        removeCollectables(otherScene.floor.entities);
+                    }
+                }
+                
+                // Reset tracking arrays
+                window.gameInstance.correct = [];
+                window.gameInstance.wrong = [];
+                window.gameInstance.collected = [];
+                window.gameInstance.correct_name = [];
+                window.gameInstance.objectCount = 0;
+                
+                // Reset player position and orientation
+                window.gameInstance.transform.translation = [0, 30.0, 0];
+                window.gameInstance.controller.pitch = 0;
+                window.gameInstance.controller.yaw = 0;
+                window.gameInstance.controller.velocity = [0, 0, 0];
+                
+                // Reset to forest scene if in cave
+                if (window.gameInstance.scene !== window.gameInstance.forestScene) {
+                    window.gameInstance.scene = window.gameInstance.forestScene;
+                    window.gameInstance.sceneNameDiv.textContent = window.gameInstance.scene.name;
+                }
+                
+                // Reset scene triggers
+                window.gameInstance.forestScene.sceneTrigger.triggered = false;
+                window.gameInstance.caveScene.sceneTrigger.triggered = false;
+                
+                // Respawn game objects
+                if (window.spawnGameObjects) {
+                    await window.spawnGameObjects();
+                }
+                
+                // Update emoji display after spawning new objects
+                if (window.updateCorrectEmojiDisplay) {
+                    window.updateCorrectEmojiDisplay();
+                }
+                
+                // Hide loading after objects spawned
+                loadingDiv.style.display = 'none';
+                
+                // Show canvas & HUD after reset
+                canvas.style.display = 'block';
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+                
+                info.style.display = 'block';
+                sceneName.style.display = 'block';
+                correctItems.style.display = 'flex';
+                timeBox.style.display = 'block';
+            } else {
+                // First time starting - show loading, hide canvas
+                canvas.style.display = 'none';
+                loadingDiv.style.display = 'block';
+                
+                info.style.display = 'block';
+                sceneName.style.display = 'block';
+                correctItems.style.display = 'flex';
+                timeBox.style.display = 'block';
 
-            // Start game
-            await main(canvas, loadingDiv);
+                // Start game
+                await main(canvas, loadingDiv);
+                
+                // After main completes, show canvas
+                canvas.style.display = 'block';
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            }
 
             // Wait for user to click the canvas to lock the pointer
             startTimer();

@@ -23,6 +23,12 @@ export class Scene {
         this.physics = new Physics(game, this.collisions);
         this.floorPhysics = new FloorPhysics();
 
+        // Default fog settings
+        this.fog = {
+            color: [0.7, 0.8, 0.9],
+            density: 0.005
+        };
+
     }
 
      initTargetScene(targetScene){
@@ -36,7 +42,6 @@ export class Scene {
 
         // //to get the coordinates for boxes, later outt!!
         // console.log(playerPos)
-        console.log(playerPos);
         
         const inBounds =
             playerPos[0] >= min[0] && playerPos[0] <= max[0] &&
@@ -79,9 +84,11 @@ export class Scene {
        
 
     clear() {
-        this.entities.length = 0;
-        this.collisionEntities.length = 0;
-        this.floorEntities.length = 0;
+        // Clear all entity arrays but keep structure for each scene type
+        this.scene.entities.length = 0;
+        this.collisions.entities.length = 0;
+        this.floor.entities.length = 0;
+        this.entities = this.scene.entities; // Ensure entities points to cleared array
     }
 
     /* ==============================

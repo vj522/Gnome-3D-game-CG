@@ -19,6 +19,12 @@ export class CaveScene extends Scene {
             gravity: -6.0, // Gravity acceleration
             jumpVelocity: 30.0, // Initial jump velocity (increased for higher jumps)
         };
+
+        // Cave fog settings - less fog
+        this.fog = {
+            color: [0.1, 0.1, 0.1], // Dark fog for cave
+            density: 0.000
+        };
     }
 
 
