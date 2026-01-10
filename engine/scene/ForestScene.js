@@ -1,5 +1,11 @@
+import { mat4 } from "../../lib/glm.js";
 import { Scene } from "./Scene.js";
-import { GLTFLoader } from "../loaders/GLTFLoader.js"
+import { GLTFLoader } from "../loaders/GLTFLoader.js";
+import { ImageLoader } from "../loaders/ImageLoader.js";
+import { Texture } from "../core/Texture.js";
+import { Sampler } from "../core/Sampler.js";
+import { Material } from "../core/Material.js";
+import { Primitive } from "../core/Primitive.js";
 
 
 export class ForestScene extends Scene {
@@ -8,6 +14,7 @@ export class ForestScene extends Scene {
         super(game);
         this.loader = new GLTFLoader();
         this.name = "Forest";
+        this.imageLoader = new ImageLoader();
         this.sceneTrigger = {
             bounds: {   min: [2, 10, -20],  
                         max: [4.5, 50, -17], },
@@ -18,6 +25,12 @@ export class ForestScene extends Scene {
             // Jump mechanics
             gravity: -20.0, // Gravity acceleration
             jumpVelocity: 15.0, // Initial jump velocity (increased for higher jumps)
+        };
+
+        // Forest fog settings
+        this.fog = {
+            color: [0.225, 0.235, 0.235],
+            density: 0.13
         };
     }
 
@@ -51,6 +64,5 @@ export class ForestScene extends Scene {
         this.addEntitiesFloor(gltfDataFloor.entities);
 
     }
-
 
 }

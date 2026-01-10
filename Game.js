@@ -1,4 +1,4 @@
-import { mat4, vec3 } from './lib/glm.js';
+import { mat4, vec3, quat } from './lib/glm.js';
 import { Camera } from './engine/core/Camera.js'
 import { FirstPersonController } from './engine/controllers/FirstPersonController.js';
 import { Transform } from './engine/core/Transform.js';
@@ -59,6 +59,11 @@ export class Game {
         
         // Visual effects
         this.blurEnabled = false;
+        this.bloomEnabled = false;
+        
+        // Pickup light (tied to object position during pickup)
+        this.pickupLightIntensity = 0.0; // 0 = off, 1 = full intensity
+        this.pickupLightPos = [0, 0, 0];
 
         //bounding box za playerja
         this.aabb = {
@@ -127,17 +132,18 @@ export class Game {
         const playerPos = this.transform.translation;
         const nearbyObjects = [];
         
-        for (const entity of this.correct) {
-            if (!entity.transform) continue;
+        for (const objectWrapper of this.correct) {
+            // objectWrapper has { entities: [...], transform: firstEntity.transform, ... }
+            if (!objectWrapper.transform) continue;
             
-            const objPos = entity.transform.translation;
+            const objPos = objectWrapper.transform.translation;
             const dx = objPos[0] - playerPos[0];
             const dy = objPos[1] - playerPos[1];
             const dz = objPos[2] - playerPos[2];
             const distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
             
             if (distance <= this.collectionRadius) {
-                nearbyObjects.push(entity);
+                nearbyObjects.push(objectWrapper);
             }
             
         }
@@ -235,21 +241,41 @@ export class Game {
                 this.wrong.splice(wrongIndex, 1);
             }
             
-            // Remove all entities of this object from scene
-            if (closestObject.entities) {
-                for (const entity of closestObject.entities) {
-                    const sceneIndex = this.scene.entities.indexOf(entity);
-                    if (sceneIndex > -1) {
-                        this.scene.entities.splice(sceneIndex, 1);
+            // Animate object lifting up before removing
+            const pickupAnimation = (closestObject) => {
+                // Get current position
+                const entities = closestObject.entities || [closestObject];
+                
+                // Create lift animation (rise slowly, pause at top)
+                const liftHeight = 1.5;  // Lower lift height
+                const animationDuration = 3200;
+                const startTime = performance.now();
+                
+                // Store animation data on each entity
+                for (const entity of entities) {
+                    if (entity.transform) {
+                        entity.pickupAnimation = {
+                            startPos: [...entity.transform.translation],
+                            liftHeight: liftHeight,
+                            startTime: startTime,
+                            duration: animationDuration,
+                        };
                     }
                 }
-            } else {
-                // Fallback for single entity objects
-                const sceneIndex = this.scene.entities.indexOf(closestObject);
-                if (sceneIndex > -1) {
-                    this.scene.entities.splice(sceneIndex, 1);
-                }
-            }
+                
+                // Remove from scene after animation completes
+                setTimeout(() => {
+                    for (const entity of entities) {
+                        delete entity.pickupAnimation; // Clean up animation data
+                        const sceneIndex = this.scene.entities.indexOf(entity);
+                        if (sceneIndex > -1) {
+                            this.scene.entities.splice(sceneIndex, 1);
+                        }
+                    }
+                }, animationDuration);
+            };
+            
+            pickupAnimation(closestObject);
             
             // Add to collected array
             this.collected.push(closestObject);
@@ -341,6 +367,65 @@ export class Game {
         // console.log(this.transform.translation[1])
         // Update controller (handles movement)
         this.controller.update(0, deltaTime);
+        
+        // Update pickup animations
+        const currentTime = performance.now();
+        let hasActivePickup = false;
+        
+        for (const entity of this.scene.entities) {
+            if (entity.pickupAnimation) {
+                const anim = entity.pickupAnimation;
+                const elapsed = currentTime - anim.startTime;
+                const progress = Math.min(elapsed / anim.duration, 1.0);
+                
+                // Custom easing: rise to top in 60% of time, pause at top for remaining 40%
+                let easedProgress;
+                let isAtTop = false;
+                if (progress < 0.6) {
+                    // Rising phase - ease out for smooth deceleration
+                    const risingProgress = progress / 0.6;
+                    easedProgress = 1 - Math.pow(1 - risingProgress, 2);
+                } else {
+                    // Pause phase - stay at top
+                    easedProgress = 1.0;
+                    isAtTop = true;
+                }
+                
+                entity.transform.translation[1] = anim.startPos[1] + (anim.liftHeight * easedProgress);
+                
+                // Keep pickup light anchored to the object's current position
+                this.pickupLightPos = [...entity.transform.translation];
+                
+                // Rotate object continuously during entire animation
+                if (entity.primitives) {
+                    const rotationSpeed = 0.02; // radians per frame
+                    const yAxisRotation = quat.create();
+                    quat.setAxisAngle(yAxisRotation, [0, 1, 0], rotationSpeed);
+                    quat.multiply(entity.transform.rotation, yAxisRotation, entity.transform.rotation);
+                }
+                
+                // Invalidate cached matrix to force recalculation
+                entity.transform._matrixRaw = null;
+                
+                // Update modelMatrix (used by renderer)
+                entity.modelMatrix = entity.transform.matrix;
+                
+                // Control pickup light: ramp up with progress, peak at top
+                if (entity.primitives) {
+                    hasActivePickup = true;
+                    // Ramp from soft (2.5) to strong (6.0) as progress approaches 1
+                    const base = 2.5;
+                    const peak = 6.0;
+                    const slowRamp = easedProgress * easedProgress; // ease-in to rise slower
+                    this.pickupLightIntensity = base + (peak - base) * slowRamp;
+                }
+            }
+        }
+        
+        // Disable light when no active pickup
+        if (!hasActivePickup) {
+            this.pickupLightIntensity = 0.0;
+        }
         
         // Apply gravity
         this.controller.velocity[1] += this.gravity * deltaTime;

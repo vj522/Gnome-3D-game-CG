@@ -1,0 +1,120 @@
+{
+  "asset": {
+    "generator": "glTF-Transform v4.2.1",
+    "version": "2.0"
+  },
+  "accessors": [
+    {
+      "type": "VEC3",
+      "componentType": 5126,
+      "count": 10128,
+      "max": [
+        6.345773696899414,
+        6.983016014099121,
+        2.7758755683898926
+      ],
+      "min": [
+        -4.435113906860352,
+        -9.760458946228027,
+        -2.6658968925476074
+      ],
+      "bufferView": 0,
+      "byteOffset": 0
+    },
+    {
+      "type": "VEC3",
+      "componentType": 5126,
+      "count": 10128,
+      "bufferView": 0,
+      "byteOffset": 12
+    },
+    {
+      "type": "SCALAR",
+      "componentType": 5123,
+      "count": 60756,
+      "bufferView": 1,
+      "byteOffset": 0
+    }
+  ],
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteOffset": 0,
+      "byteLength": 243072,
+      "byteStride": 24,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 243072,
+      "byteLength": 121512,
+      "target": 34963
+    }
+  ],
+  "buffers": [
+    {
+      "uri": "buffer.bin",
+      "byteLength": 364584
+    }
+  ],
+  "materials": [
+    {
+      "pbrMetallicRoughness": {}
+    }
+  ],
+  "meshes": [
+    {
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 0,
+            "NORMAL": 1
+          },
+          "mode": 4,
+          "material": 0,
+          "indices": 2
+        }
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "name": "Scene",
+      "children": [
+        1
+      ]
+    },
+    {
+      "name": "Mball015",
+      "extras": {
+        "name": "Mball.015"
+      },
+      "translation": [
+        -38.52150344848633,
+        9.452019691467285,
+        4.407847881317139
+      ],
+      "rotation": [
+        0.2225137945276896,
+        0.49151122512364925,
+        0.45796599939959914,
+        0.7065206787181398
+      ],
+      "scale": [
+        0.3409056357496577,
+        0.340905576485195,
+        0.34090563603342855
+      ],
+      "mesh": 0
+    }
+  ],
+  "scenes": [
+    {
+      "name": "AuxScene",
+      "nodes": [
+        0
+      ]
+    }
+  ],
+  "scene": 0
+}

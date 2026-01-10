@@ -18,6 +18,12 @@ struct CameraUniforms {
     projectionMatrix: mat4x4f,
     cameraPosition: vec3f,
     padding1: f32, // Alignment padding
+    fogColor: vec3f,
+    padding2: f32,
+    fogDensity: f32,
+    padding3: f32,
+    padding4: f32,
+    padding5: f32,
 }
 
 struct ModelUniforms {
@@ -27,10 +33,10 @@ struct ModelUniforms {
 
 struct MaterialUniforms {
     baseColorFactor: vec4f,
+    emissionFactor: vec3f,
     hasBaseTexture: u32,
     padding1: u32,
     padding2: u32,
-    padding3: u32,
 }
 
 struct LightUniforms {
@@ -93,13 +99,13 @@ fn fragmentMain(input: VertexOutput) -> @location(0) vec4f {
     // Normalize normal
     let normal = normalize(input.normal);
     
-    // Calculate lighting
+    // ===== STANDARD DIRECTIONAL LIGHTING =====
     let lightDir = normalize(-light.direction);
     
-    // Ambient light
+    // Ambient light (base illumination)
     let ambient = 0.3 * light.color;
     
-    // Diffuse light
+    // Diffuse light from directional light
     let diff = max(dot(normal, lightDir), 0.0);
     let diffuse = diff * light.color;
     

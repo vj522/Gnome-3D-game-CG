@@ -25,6 +25,11 @@ export class Scene {
 
         // Torch light (če je v sceni)
         this.torch = null;
+        // Default fog settings
+        this.fog = {
+            color: [0.7, 0.8, 0.9],
+            density: 0.005
+        };
 
     }
 
@@ -39,7 +44,6 @@ export class Scene {
 
         // //to get the coordinates for boxes, later outt!!
         // console.log(playerPos)
-        console.log(playerPos);
         
         const inBounds =
             playerPos[0] >= min[0] && playerPos[0] <= max[0] &&

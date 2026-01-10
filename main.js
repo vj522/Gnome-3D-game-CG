@@ -32,6 +32,7 @@ export async function main(canvas) {
     
     
     let game = null;
+    let pendingWinTimeout = null;
     
     // Set canvas size
     function resizeCanvas() {
@@ -118,7 +119,14 @@ export async function main(canvas) {
                 entity.isCollectable = true; // Mark as a collectable object
             }
             
+            // Add to current scene
             game.scene.addEntities(objData.entities);
+            
+            // Also add to the other scene so objects appear in both forest and cave
+            const otherScene = game.scene === game.forestScene ? game.caveScene : game.forestScene;
+            if (otherScene) {
+                otherScene.addEntities(objData.entities);
+            }
             
             // Create a wrapper object that groups all entities as one logical object
             const objectWrapper = {
@@ -170,9 +178,11 @@ export async function main(canvas) {
         
         // Create game
         game = new Game(canvas, renderer);
+        window.gameInstance = game; // Store for restart purposes
         await game.init_scene();
         console.log('Game created');
 
+    async function spawnGameObjects() {
         // Add random objects at specified coordinates
         const coordinates = [
             { x: 8.35,  y: 28.22, z: -14.89 },
@@ -185,8 +195,6 @@ export async function main(canvas) {
             { x: -16.33, y: 27.20, z: -2.32 },
             { x: -11.30, y: 28.65, z: -18.46 },
             { x: -4.41,  y: 28.34, z: -19.89 },
-            // { x: -22.79, y: 12.62, z: -5.97 },
-            // { x: -18.06, y: 12.18, z: -31.42 }
         ];
 
         const objectPaths = [
@@ -213,7 +221,10 @@ export async function main(canvas) {
         }
         
         console.log(`Objects spawned - Correct: ${game.correct.length}, Wrong: ${game.wrong.length}`);
-
+    }
+    
+    // Spawn objects initially
+    await spawnGameObjects();
 
         
         // Preload textures
@@ -223,7 +234,8 @@ export async function main(canvas) {
         // Hide loading screen
         loadingDiv.style.display = 'none';
         
-        // Debug: Log all arrays after game setup
+        // Make spawnGameObjects available globally for restarts
+        window.spawnGameObjects = spawnGameObjects;
         
         // Verify no objects exist in multiple arrays
         game.verifyArrayIntegrity();
@@ -267,13 +279,22 @@ export async function main(canvas) {
             updateCorrectEmojiDisplay(); // update emojis instead of names
 
             if (game.correct.length === 0){
-                window.showWin();
+                // Delay end screen to let pickup animation finish
+                if (pendingWinTimeout) {
+                    clearTimeout(pendingWinTimeout);
+                }
+                pendingWinTimeout = setTimeout(() => {
+                    window.showWin();
+                }, 1500); // 1.5s delay before showing end screen
             }
         };
 
         
         // Initial display update
         updateCorrectEmojiDisplay();
+        
+        // Make updateCorrectEmojiDisplay available globally for restarts
+        window.updateCorrectEmojiDisplay = updateCorrectEmojiDisplay;
 
 
         // Render loop
