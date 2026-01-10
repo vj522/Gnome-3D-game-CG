@@ -48,6 +48,10 @@ struct LightUniforms {
     pickupIntensity: f32,
     pickupColor: vec3f,
     padding3: f32,
+    torchLightPos: vec3f,
+    torchIntensity: f32,
+    torchColor: vec3f,
+    padding4: f32,
 }
 
 @group(0) @binding(0) var<uniform> camera: CameraUniforms;
@@ -147,6 +151,35 @@ fn fragmentMain(input: VertexOutput) -> @location(0) vec4f {
         result = result + (pickupDiffuse + pickupSpecular) * baseColor.rgb;
     }
     
+    // ===== TORCH POINT LIGHT (WHEN SHIFT PRESSED) =====
+    var torchContribution = vec3f(0.0, 0.0, 0.0);
+    if (light.torchIntensity > 0.01) {
+        let torchToPixel = light.torchLightPos - input.worldPosition;
+        let torchDistance = length(torchToPixel);
+        let torchDir = normalize(torchToPixel);
+        
+        // Stronger attenuation for shorter range
+        let torchAttenuation = 1.0 / (1.0 + torchDistance * 0.55);
+        
+        // Strong ambient component - lights everything around equally
+        let torchAmbient = light.torchColor * torchAttenuation * light.torchIntensity * 0.8;
+        
+        // Diffuse component - adds directional lighting
+        let torchDiff = max(dot(normal, torchDir), 0.3); // min 0.3 so backfaces are lit too
+        let torchDiffuse = torchDiff * light.torchColor * torchAttenuation * light.torchIntensity * 0.5;
+        
+        // Specular highlight
+        let torchReflect = reflect(-torchDir, normal);
+        let torchSpec = pow(max(dot(viewDir, torchReflect), 0.0), 8.0);
+        let torchSpecular = torchSpec * light.torchColor * torchAttenuation * light.torchIntensity * 0.3;
+        
+        // Combine all torch lighting components
+        torchContribution = (torchAmbient + torchDiffuse + torchSpecular) * baseColor.rgb;
+        
+        // Add torch lighting to result BEFORE fog
+        result = result + torchContribution;
+    }
+    
     // Add emission as pure additive (creates glow effect without washing out)
     result = result + material.emissionFactor;
     
@@ -155,6 +188,11 @@ fn fragmentMain(input: VertexOutput) -> @location(0) vec4f {
         let distance_fog = length(input.worldPosition - camera.cameraPosition);
         let fogFactor = exp(-camera.fogDensity * distance_fog * 0.5);  // 0.5 za manj intenzivno meglo
         result = mix(camera.fogColor, result, fogFactor);
+        
+        // Add torch contribution AFTER fog to ensure it's visible
+        if (light.torchIntensity > 0.01) {
+            result = result + torchContribution * 0.5; // Add extra torch glow through fog
+        }
     }
     
     return vec4f(result, baseColor.a);

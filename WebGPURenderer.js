@@ -215,9 +215,9 @@ export class WebGPURenderer {
             usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
         });
         
-        // Light uniform buffer (vec3 + padding + vec3 + padding + vec3 + f32 + vec3 + padding = 64 bytes)
+        // Light uniform buffer (vec3 + padding + vec3 + padding + vec3 + f32 + vec3 + padding + vec3 + f32 + vec3 + padding = 96 bytes)
         this.lightUniformBuffer = this.device.createBuffer({
-            size: 64,
+            size: 96,
             usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
         });
         
@@ -617,7 +617,7 @@ export class WebGPURenderer {
         return bindGroup;
     }
     
-    render(scene, camera, blurEnabled = false, bloomEnabled = false, pickupLightIntensity = 0.0, pickupLightPos = [0, 0, 0]) {
+    render(scene, camera, blurEnabled = false, bloomEnabled = false, pickupLightIntensity = 0.0, pickupLightPos = [0, 0, 0], torchLightEnabled = false) {
         // Update camera uniforms
         const cameraData = new Float32Array(44); // 176 bytes / 4
         cameraData.set(camera.viewMatrix, 0);
@@ -632,6 +632,8 @@ export class WebGPURenderer {
         this.device.queue.writeBuffer(this.cameraUniformBuffer, 0, cameraData);
         
         // Update light uniforms
+        const lightData = new Float32Array(24); // 96 bytes / 4
+        
         // Standard directional light for base illumination
         let lightDir = [0.3, -1.0, 0.5];
         let lightCol = [1.0, 1.0, 0.95];
@@ -639,14 +641,26 @@ export class WebGPURenderer {
             lightCol = [0.3, 0.3, 0.3]; // Dimmer light for cave
         }
         
-        const lightData = new Float32Array(16); // 64 bytes / 4
         lightData.set(lightDir, 0);           // direction (offset 0)
         lightData.set(lightCol, 4);           // color (offset 4)
-        // Pickup light data
+        
+        // Pickup light data - restored for pickup objects
         lightData.set(pickupLightPos, 8);    // pickupLightPos (offset 8)
         lightData[11] = pickupLightIntensity; // pickupIntensity (offset 11)
-        // Deeper blue tint for pickup glow
-        lightData.set([0.6, 0.8, 1.4], 12); // pickupColor - vivid blue (offset 12)
+        // Yellow tint for pickup glow
+        lightData.set([1.0, 0.9, 0.3], 12); // pickupColor - warm yellow (offset 12)
+        
+        // Torch light data - positioned at camera location (ONLY IN CAVE)
+        if (torchLightEnabled && scene.name === 'Cave') {
+            lightData.set(camera.position, 16);  // torchLightPos (offset 16)
+            lightData[19] = 3.5;                 // torchIntensity (offset 19) - moderate brightness
+            lightData.set([1.0, 0.65, 0.35], 20);  // torchColor - yellow-orange (offset 20)
+        } else {
+            lightData.set([0, 0, 0], 16);  // torchLightPos
+            lightData[19] = 0.0;            // torchIntensity - off
+            lightData.set([0, 0, 0], 20);  // torchColor
+        }
+        
         this.device.queue.writeBuffer(this.lightUniformBuffer, 0, lightData);
         
         // Update post-process uniforms

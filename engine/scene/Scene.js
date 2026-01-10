@@ -29,6 +29,9 @@ export class Scene {
             density: 0.005
         };
 
+        // Torch light (če je v sceni)
+        this.torch = null;
+
     }
 
      initTargetScene(targetScene){

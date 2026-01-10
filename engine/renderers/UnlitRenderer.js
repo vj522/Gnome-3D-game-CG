@@ -48,10 +48,12 @@ export class UnlitRenderer extends BaseRenderer {
             layout: 'auto',
             vertex: {
                 module,
+                entryPoint: 'vertex',
                 buffers: [ vertexBufferLayout ],
             },
             fragment: {
                 module,
+                entryPoint: 'fragment',
                 targets: [{ format: this.format }],
             },
             depthStencil: {
@@ -71,6 +73,8 @@ export class UnlitRenderer extends BaseRenderer {
             size: [this.canvas.width, this.canvas.height],
             usage: GPUTextureUsage.RENDER_ATTACHMENT,
         });
+        this.depthTextureView = this.depthTexture.createView();
+        this.depthTextureSize = { width: this.canvas.width, height: this.canvas.height };
     }
 
     prepareEntity(entity) {
@@ -157,7 +161,7 @@ export class UnlitRenderer extends BaseRenderer {
     }
 
     render(entities, camera) {
-        if (this.depthTexture.width !== this.canvas.width || this.depthTexture.height !== this.canvas.height) {
+        if (!this.depthTextureSize || this.depthTextureSize.width !== this.canvas.width || this.depthTextureSize.height !== this.canvas.height) {
             this.recreateDepthTexture();
         }
 
@@ -165,14 +169,14 @@ export class UnlitRenderer extends BaseRenderer {
         this.renderPass = encoder.beginRenderPass({
             colorAttachments: [
                 {
-                    view: this.context.getCurrentTexture(),
+                    view: this.context.getCurrentTexture().createView(),
                     clearValue: [1, 1, 1, 1],
                     loadOp: 'clear',
                     storeOp: 'store',
                 },
             ],
             depthStencilAttachment: {
-                view: this.depthTexture,
+                view: this.depthTextureView,
                 depthClearValue: 1,
                 depthLoadOp: 'clear',
                 depthStoreOp: 'discard',

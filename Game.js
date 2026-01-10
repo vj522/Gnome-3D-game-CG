@@ -49,6 +49,14 @@ export class Game {
         this.jumpVelocity = null;
         this.isOnGround = true;
         
+        // Torch light toggle (Shift key) - ONLY in Cave
+        this.torchLightEnabled = false;
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Shift' && this.scene.name === 'Cave') {
+                this.torchLightEnabled = !this.torchLightEnabled; // Toggle
+            }
+        });
+
         // Visual effects
         this.blurEnabled = false;
         this.bloomEnabled = false;
@@ -456,6 +464,11 @@ export class Game {
         //scene specific physics, resolve collisions with objects
         this.scene.physics.update(0, deltaTime);
         
+        // Update scene-specific held items (torch in CaveScene follows camera)
+        if (this.scene.updateHeldItems) {
+            this.scene.updateHeldItems(this.transform, this.controller.velocity);
+        }
+        
         // Update camera matrices
         this.updateCameraMatrices();
 
@@ -524,7 +537,7 @@ export class Game {
     }
     
     render() {
-        this.renderer.render(this.scene, this.camera, this.blurEnabled, this.bloomEnabled, this.pickupLightIntensity, this.pickupLightPos);
+        this.renderer.render(this.scene, this.camera, this.blurEnabled, this.bloomEnabled, this.pickupLightIntensity, this.pickupLightPos, this.torchLightEnabled);
     }
     
     // Methods for FirstPersonController compatibility
