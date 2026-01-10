@@ -192,9 +192,9 @@
     <div id="startScreen">
         <div id="startContent">
             <h1>Gnome</h1>
-            <p>Greetings dear traveller. I ask you to lend me you skills of observation for i must find some rare ingredients to craft a truly magical dish </p>
-            <p>Use WASD to move, Space to jump and P to pick up the items and when you enter the mystical cave be prepared to swiftly use the flashlight pressing Shift button </p>
-            <p>But beware, if you collect the wrong ingredients you shall poison me and i shant be able to prepare a delicious feast for my hundredth-year celebration </p>     
+            <p>Greetings dear traveller. I ask you to lend me your skills of observation for i must find some rare ingredients to craft a truly magical dish. </p>
+            <p>Use WASD to move, Space to jump and E to pick up the items and when you enter the mystical cave be prepared to swiftly light up the torch by pressing Shift button! </p>
+            <p>But beware, if you collect the wrong ingredients you shall poison me and i shant be able to prepare a delicious feast for my hundredth-year celebration. </p>     
         </div>
 
         <button id="startButton">Begin The Search</button>
@@ -208,7 +208,8 @@
         <div>Move the mouse - View</div>
         <div>WASD - Move</div>
         <div>Space - Jump</div>
-        <div>P - Pick up item</div>
+        <div>E - Pick up item</div>
+        <div>Shift - Light up the torch</div>
     </div>
 
     <div id="sceneName" style="display:none;"></div>
@@ -288,7 +289,7 @@
 
         function showLose() {
             clearInterval(timerInterval);
-            endMessage.innerHTML  = "You ran out of time.. <br> The village goes hungry on this special day.";
+            endMessage.innerHTML  = "You ran out of time.. <br> The village goes hungry on this special day :((";
             endScreen.style.display = 'flex';
             document.exitPointerLock?.();
         }

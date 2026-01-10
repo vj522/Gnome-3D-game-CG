@@ -97,7 +97,7 @@ export class Game {
                 console.log('Blur effect:', this.blurEnabled ? 'ON' : 'OFF');
             }
             // Collect objects (P)
-            if (e.code === 'KeyP') {
+            if (e.code === 'KeyE') {
                 this.tryCollectNearbyObject();
             }
         });

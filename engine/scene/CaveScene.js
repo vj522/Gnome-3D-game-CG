@@ -12,8 +12,8 @@ export class CaveScene extends Scene {
         super(game);
         this.loader = new GLTFLoader();
         this.name = "Cave";
-        this.torch = null;
-        this.torchBaseMatrix = mat4.create();
+        this.torchEntities = [];
+        this.torchBaseMatrices = [];
         this.torchOffset = [0.55, -0.30, -0.7];
         this.torchScale = 0.3;
         this.torchBobTime = 0;
@@ -48,7 +48,8 @@ export class CaveScene extends Scene {
 
         // Počisti stare entitete
         this.clear();
-        this.torch = null;
+        this.torchEntities = [];
+        this.torchBaseMatrices = [];
         this.torchBobTime = 0;
 
         // Load GLTF model
@@ -88,14 +89,14 @@ export class CaveScene extends Scene {
         console.log('Torch GLTF loaded');
         
         if (torchData.entities?.length) {
-            this.torch = torchData.entities[0];
-            this.torchBaseMatrix = mat4.clone(this.torch.modelMatrix ?? mat4.create());
+            this.torchEntities = torchData.entities;
+            this.torchBaseMatrices = torchData.entities.map(entity => mat4.clone(entity.modelMatrix ?? mat4.create()));
             
             // Postavi transform in dodaj v sceno
-            this.changeToVec([this.torch]);
-            this.addTransform([this.torch]);
-            this.addEntities([this.torch]);
-            console.log('Fire torch loaded and added to cave scene');
+            this.changeToVec(this.torchEntities);
+            this.addTransform(this.torchEntities);
+            this.addEntities(this.torchEntities);
+            console.log(`Fire torch loaded with ${this.torchEntities.length} entities and added to cave scene`);
         } else {
             console.warn('No torch entity found in GLTF');
         }
@@ -103,7 +104,7 @@ export class CaveScene extends Scene {
     }
 
     updateHeldItems(playerTransform, playerVelocity){
-        if (!this.torch) return;
+        if (!this.torchEntities.length) return;
 
         // Preveri ali se premikamo (threshold 0.15 - malo višja za hitrejši stop)
         const speed = vec3.length(playerVelocity || [0, 0, 0]);
@@ -145,11 +146,15 @@ export class CaveScene extends Scene {
         const offsetMatrix = mat4.create();
         mat4.translate(offsetMatrix, offsetMatrix, bobOffset);
         mat4.scale(offsetMatrix, offsetMatrix, [this.torchScale, this.torchScale, this.torchScale]);
-        // Upoštevaj izvorno orientacijo/scale modela
-        const localTorch = mat4.create();
-        mat4.mul(localTorch, offsetMatrix, this.torchBaseMatrix);
-        mat4.mul(this.torch.modelMatrix, playerTransform.matrix, localTorch);
+
+        // Apply to all torch entities
+        for (let i = 0; i < this.torchEntities.length; i++) {
+            const entity = this.torchEntities[i];
+            const baseMatrix = this.torchBaseMatrices[i];
+            // Upoštevaj izvorno orientacijo/scale modela
+            const localTorch = mat4.create();
+            mat4.mul(localTorch, offsetMatrix, baseMatrix);
+            mat4.mul(entity.modelMatrix, playerTransform.matrix, localTorch);
+        }
     }
-
-
 }

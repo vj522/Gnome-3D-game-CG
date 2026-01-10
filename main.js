@@ -202,7 +202,7 @@ export async function main(canvas) {
         const objectPaths = [
             'objekti/flower/scene.gltf',
             'objekti/strawberry/strawberry.gltf',
-            'objekti/crystal_stone_rock/scene.gltf',
+            'objekti/rock/crystal_stone_rock.gltf',
             'objekti/berries/scene.gltf',
             'objekti/mushrooms/mushrooms.gltf'
         ];
@@ -248,7 +248,7 @@ export async function main(canvas) {
         const objectEmojiMap = {
             'flower': '🌹',
             'strawberry': '🍓',
-            'crystal_stone_rock': '🪨',
+            'rock': '🪨',
             'berries': '🍒',
             'mushrooms': '🍄'
         };

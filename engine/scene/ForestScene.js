@@ -50,7 +50,7 @@ export class ForestScene extends Scene {
 
 
         //boxes za drevesa, stene, meje površine
-        const gltfDataBox = await this.loader.load('objekti/ForestScene/wall/forest_all_boxes.gltf');
+        const gltfDataBox = await this.loader.load('objekti/ForestScene/collisions/collisions.gltf');
         console.log('GLTF model loaded (forest collisions)');
 
         this.changeToVec(gltfDataBox.entities);

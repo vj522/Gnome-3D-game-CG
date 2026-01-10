@@ -652,7 +652,11 @@ export class WebGPURenderer {
         
         // Torch light data - positioned at camera location (ONLY IN CAVE)
         if (torchLightEnabled && scene.name === 'Cave') {
-            lightData.set(camera.position, 16);  // torchLightPos (offset 16)
+            let ogenj = structuredClone(camera.position);
+            ogenj[1] += 2;
+            ogenj[2] += 2;
+            lightData.set(ogenj, 16);  // torchLightPos (offset 16)
+            console.log(camera.position + "  kamera tulele")
             lightData[19] = 3.5;                 // torchIntensity (offset 19) - moderate brightness
             lightData.set([1.0, 0.65, 0.35], 20);  // torchColor - yellow-orange (offset 20)
         } else {
