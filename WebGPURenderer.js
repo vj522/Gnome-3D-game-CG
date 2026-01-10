@@ -498,7 +498,7 @@ export class WebGPURenderer {
             // console.log('Creating texture:', textureData.image.src);
             texture = await this.createTexture(textureData.image);
             this.textureCache.set(textureData, texture);
-            console.log('Texture created successfully');
+            // Texture created successfully
         }
         
         return texture;
@@ -631,22 +631,28 @@ export class WebGPURenderer {
         cameraData[40] = scene.fog.density;
         this.device.queue.writeBuffer(this.cameraUniformBuffer, 0, cameraData);
         
-        // Update light uniforms
-        // Standard directional light for base illumination
-        let lightDir = [0.3, -1.0, 0.5];
-        let lightCol = [1.0, 1.0, 0.95];
-        if (scene.name === "Cave") {
-            lightCol = [0.3, 0.3, 0.3]; // Dimmer light for cave
+        // Update light uniforms (include torch point light if available)
+        const lightData = new Float32Array(16); // 64 bytes / 4
+        lightData.set([0.3, -1.0, 0.5], 0);     // direction (offset 0)
+        lightData.set([1.0, 1.0, 0.95], 4);     // color (offset 16 bytes)
+        
+        // Point light from torch (if scene has it AND shift is pressed)
+        if (torchLightEnabled && scene.torch && scene.torch.modelMatrix) {
+            const torchPos = [
+                scene.torch.modelMatrix[12],
+                scene.torch.modelMatrix[13],
+                scene.torch.modelMatrix[14]
+            ];
+            lightData.set(torchPos, 8);         // pointLightPos (offset 32 bytes)
+            lightData[11] = 15.0;               // pointLightRadius - manjši radij
+            lightData.set([3.5, 2.0, 0.6], 12); // pointLightColor - še bolj intenzivna
+        } else {
+            // No torch: set far away position and small radius
+            lightData.set([0, -1000, 0], 8);
+            lightData[11] = 0.01;
+            lightData.set([0, 0, 0], 12);
         }
         
-        const lightData = new Float32Array(16); // 64 bytes / 4
-        lightData.set(lightDir, 0);           // direction (offset 0)
-        lightData.set(lightCol, 4);           // color (offset 4)
-        // Pickup light data
-        lightData.set(pickupLightPos, 8);    // pickupLightPos (offset 8)
-        lightData[11] = pickupLightIntensity; // pickupIntensity (offset 11)
-        // Deeper blue tint for pickup glow
-        lightData.set([0.6, 0.8, 1.4], 12); // pickupColor - vivid blue (offset 12)
         this.device.queue.writeBuffer(this.lightUniformBuffer, 0, lightData);
         
         // Update post-process uniforms
@@ -897,7 +903,6 @@ export class WebGPURenderer {
     
     // Async method to pre-load textures
     async preloadTextures(scene) {
-        console.log('Starting texture preload...');
         const promises = [];
         
         for (const entity of scene.entities) {
@@ -912,10 +917,8 @@ export class WebGPURenderer {
         }
         
         await Promise.all(promises);
-        console.log(`Preloaded ${promises.length} textures`);
         
         // Now create all material bind groups
-        console.log('Creating material bind groups...');
         for (const entity of scene.entities) {
             if (entity.primitives) {
                 for (const primitive of entity.primitives) {
@@ -925,7 +928,6 @@ export class WebGPURenderer {
                 }
             }
         }
-        console.log('All material bind groups created');
     }
     
     createPrimitiveMaterialBindGroup(primitive) {

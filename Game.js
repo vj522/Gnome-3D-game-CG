@@ -49,6 +49,14 @@ export class Game {
         this.jumpVelocity = null;
         this.isOnGround = true;
         
+        // Torch light toggle (Shift key)
+        this.torchLightEnabled = false;
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Shift') {
+                this.torchLightEnabled = !this.torchLightEnabled; // Toggle
+            }
+        });
+        
         // Visual effects
         this.blurEnabled = false;
         this.bloomEnabled = false;
@@ -86,7 +94,7 @@ export class Game {
             // Blur toggle (Digit8)
             if (e.code === 'Digit8') {
                 this.blurEnabled = !this.blurEnabled;
-                console.log('Blur effect:', this.blurEnabled ? 'ON' : 'OFF');
+                // Blur effect toggled
             }
             // Collect objects (P)
             if (e.code === 'KeyP') {
@@ -455,6 +463,9 @@ export class Game {
         
         //scene specific physics, resolve collisions with objects
         this.scene.physics.update(0, deltaTime);
+
+        // Update items vezane na kamero (bakla v jami)
+        this.scene.updateHeldItems?.(this.transform, this.controller.velocity);
         
         // Update camera matrices
         this.updateCameraMatrices();
@@ -471,7 +482,7 @@ export class Game {
     }
 
     async changeScene(newScene) {
-        console.log("Switching scenes...");
+        // Switching scenes
 
         //new scene je sceneTriggers z bounds, target scene, position, zay, triggered?
 
@@ -524,7 +535,7 @@ export class Game {
     }
     
     render() {
-        this.renderer.render(this.scene, this.camera, this.blurEnabled, this.bloomEnabled, this.pickupLightIntensity, this.pickupLightPos);
+        this.renderer.render(this.scene, this.camera, this.blurEnabled, this.torchLightEnabled);
     }
     
     // Methods for FirstPersonController compatibility
