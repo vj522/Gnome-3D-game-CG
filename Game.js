@@ -535,7 +535,7 @@ export class Game {
     }
     
     render() {
-        this.renderer.render(this.scene, this.camera, this.blurEnabled, this.torchLightEnabled);
+        this.renderer.render(this.scene, this.camera, this.blurEnabled, false, 0.0, [0, 0, 0], this.torchLightEnabled);
     }
     
     // Methods for FirstPersonController compatibility
