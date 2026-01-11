@@ -96,7 +96,7 @@ export class Game {
                 this.blurEnabled = !this.blurEnabled;
                 console.log('Blur effect:', this.blurEnabled ? 'ON' : 'OFF');
             }
-            // Collect objects (P)
+            // Collect objects (E)
             if (e.code === 'KeyE') {
                 this.tryCollectNearbyObject();
             }
@@ -247,7 +247,7 @@ export class Game {
                 const entities = closestObject.entities || [closestObject];
                 
                 // Create lift animation (rise slowly, pause at top)
-                const liftHeight = 1.5;  // Lower lift height
+                const liftHeight = 1.5;
                 const animationDuration = 3200;
                 const startTime = performance.now();
                 
@@ -504,6 +504,8 @@ export class Game {
         this.transform.translation = newScene.targetPosition;
         this.controller.yaw = newScene.targetYaw;
         
+        // Turn off torch light when changing scenes
+        this.torchLightEnabled = false;
 
         this.sceneNameDiv.textContent = this.scene.name;
 

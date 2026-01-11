@@ -34,7 +34,7 @@ export class CaveScene extends Scene {
 
         // Cave fog settings
         this.fog = {
-            color: [0.1, 0.1, 0.1], // Dark fog for cave
+            color: [0.1, 0.1, 0.1],
             density: 0.000
         };
     }
@@ -51,6 +51,11 @@ export class CaveScene extends Scene {
         this.torchEntities = [];
         this.torchBaseMatrices = [];
         this.torchBobTime = 0;
+        
+        // Always reset torch light when entering the cave
+        if (this.game && this.game.torchLightEnabled !== undefined) {
+            this.game.torchLightEnabled = false;
+        }
 
         // Load GLTF model
         loadingDiv.textContent = 'Loading cave model...';

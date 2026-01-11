@@ -647,10 +647,9 @@ export class WebGPURenderer {
         // Pickup light data - restored for pickup objects
         lightData.set(pickupLightPos, 8);    // pickupLightPos (offset 8)
         lightData[11] = pickupLightIntensity; // pickupIntensity (offset 11)
-        // Yellow tint for pickup glow
         lightData.set([1.0, 0.9, 0.3], 12); // pickupColor - warm yellow (offset 12)
         
-        // Torch light data - positioned at camera location (ONLY IN CAVE)
+        // Torch light data - positioned at camera location
         if (torchLightEnabled && scene.name === 'Cave') {
             let ogenj = structuredClone(camera.position);
             ogenj[1] += 2;
@@ -679,7 +678,7 @@ export class WebGPURenderer {
         const renderPassDescriptor = {
             colorAttachments: [{
                 view: this.renderTextureView,
-                clearValue: { r: 0.75, g: 0.88, b: 1.0, a: 1.0 }, // Svetlo modro nebo (manj intenzivno)
+                clearValue: { r: 0.75, g: 0.88, b: 1.0, a: 1.0 }, // light blue sky
                 loadOp: 'clear',
                 storeOp: 'store'
             }],

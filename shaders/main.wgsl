@@ -122,7 +122,7 @@ fn fragmentMain(input: VertexOutput) -> @location(0) vec4f {
     // Combine standard lighting
     var result = (ambient + diffuse + specular) * baseColor.rgb;
     
-    // ===== PICKUP POINT LIGHT (ADDITIONAL) =====
+    // ===== PICKUP POINT LIGHT =====
     if (light.pickupIntensity > 0.01) {
         let lightToPixel = light.pickupLightPos - input.worldPosition;
         let distance = length(lightToPixel);
