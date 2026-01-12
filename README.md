@@ -2,7 +2,7 @@
 game for computer graphics
 
 ## instructions
-Iz lokacije mape koda v terminalu napišemo `python -m http.server 8000` ter v brskalnuku igro zaženemo z `localhost:8000`
+Iz lokacije mape koda v terminalu napišemo `python -m http.server 8000` ter v brskalniku igro zaženemo z `localhost:8000`
 
 
 
